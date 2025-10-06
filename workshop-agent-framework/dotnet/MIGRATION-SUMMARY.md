@@ -48,16 +48,7 @@ This document summarizes the migration of all 6 Semantic Kernel workshop lessons
 ---
 
 ### Lesson 4: List Plugins and Functions
-**Status**: ✅ Fully Migrated and Tested
-
-**Key Changes**:
-- `kernel.Plugins.GetFunctionsMetadata()` → Enumerate `AIFunction` instances
-- Access metadata via `function.Metadata.Name`, `.Description`, `.Parameters`
-- Created inline helper method instead of SK extension methods
-- Simplified approach without complex metadata conversions
-
-**Test Result**: Successfully displays all 3 functions with parameters
-
+**Status**: Abandoned while we confirm the approach here
 ---
 
 ### Lesson 5: Chat Completion Agent (Stock Sentiment)
