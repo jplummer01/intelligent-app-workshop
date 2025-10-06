@@ -1,68 +1,159 @@
-# Lesson 6 - Agent Framework with Bing Grounding (Work in Progress)
+# Lesson 6: Financial Analysis Agent with Web Search ✅
 
-## Original Semantic Kernel Lesson 6
-The original lesson demonstrates:
-- Azure AI Agent Service integration via `Microsoft.SemanticKernel.Agents.AzureAI`
-- Bing grounding for real-time web search
-- Agent threads for conversation management
-- Access to current news and analyst ratings
+## Overview
+This lesson demonstrates how to use **HostedWebSearchTool** (Bing grounding) with Microsoft Agent Framework to create an intelligent financial analysis agent that can handle free-form questions and search the web for real-time information.
 
-## Microsoft Agent Framework and Bing Grounding
+## Key Concepts
 
-According to the [Microsoft Agent Framework blog post](https://devblogs.microsoft.com/dotnet/introducing-microsoft-agent-framework-preview/):
+### HostedWebSearchTool
+The `HostedWebSearchTool` class from the `Microsoft.Agents.AI` namespace provides built-in web search capabilities powered by Bing:
 
-> "Because Microsoft Agent Framework builds on Microsoft.Extensions.AI, your agents can use more robust tools including:
-> - Model Context Protocol (MCP) servers
-> - **Hosted tools – Access server-side tools like Code Interpreter, Bing Grounding, and many more**"
+```csharp
+using Microsoft.Agents.AI;
 
-### Current Status
+new HostedWebSearchTool()  // Bing grounding for web search
+```
 
-The `Microsoft.Agents.AI` package (preview) **DOES support Bing grounding**, but:
+### ChatClientAgent with Web Search
+Combine AI agents with web search and custom functions for comprehensive financial analysis:
 
-1. **Documentation Gap**: The blog post mentions Bing grounding as a hosted tool but doesn't provide specific code examples
-2. **Package Conflicts**: `Microsoft.Agents.AI` brings dependencies that conflict with the current `Microsoft.Extensions.AI` setup
-3. **Azure Foundry Integration**: Bing grounding appears to require Azure AI Foundry agent hosting, not just local chat completion
+```csharp
+var agent = new ChatClientAgent(chatClient, new ChatClientAgentOptions(
+    instructions: "You are a financial analysis agent with web search capabilities...",
+    name: "FinancialAnalysisAgent",
+    description: "Provides comprehensive financial analysis using web search and market data.")
+{
+    ChatOptions = new ChatOptions
+    {
+        Tools = [
+            AIFunctionFactory.Create(timePlugin.GetCurrentUtcTime),
+            AIFunctionFactory.Create(stockDataPlugin.GetStockPrice),
+            new HostedWebSearchTool()  // Web search capability
+        ]
+    }
+});
+```
 
-### What We Know
+## Migration from Semantic Kernel
 
-- ✅ Bing grounding IS available in Microsoft Agent Framework
-- ✅ It works as a "hosted tool" (server-side capability)
-- ❓ Exact API usage not yet documented in preview
-- ❓ May require Azure AI Foundry deployment (not localhost)
+### Semantic Kernel Approach
+```csharp
+// SK uses Azure AI Agent Service with Azure.AI.Agents.Persistent
+var agentMetadata = await assistantsClient.Administration.CreateAgentAsync(
+    model: model,
+    name: "StockSentimentAgent",
+    instructions: instructions,
+    tools: [new BingGroundingToolDefinition()]);
+```
 
-## Current Implementation
+### Agent Framework Approach
+```csharp
+// Agent Framework uses HostedWebSearchTool from Microsoft.Agents.AI
+var agent = new ChatClientAgent(chatClient, new ChatClientAgentOptions(
+    instructions: instructions,
+    name: "FinancialAnalysisAgent")
+{
+    ChatOptions = new ChatOptions
+    {
+        Tools = [
+            new HostedWebSearchTool()  // Direct web search integration
+        ]
+    }
+});
+```
 
-This version uses the standard Agent Framework pattern WITHOUT Bing grounding:
-- ✅ Chat completion with `Microsoft.Extensions.AI`
-- ✅ Function calling with stock price and time plugins
-- ✅ System prompt for stock sentiment agent behavior
-- ✅ Technical analysis based on stock price data only
-- ❌ No Bing search / web grounding (yet)
+## Features Demonstrated
 
-## Next Steps
+1. **Free-form Financial Queries**: Handles any financial question or topic
+2. **Web Search Integration**: Real-time web search using Bing for current market information
+3. **Multi-Tool Orchestration**: Combines web search with custom functions
+4. **Agent Threads**: Maintains conversation context across interactions
+5. **Intelligent Stock Analysis**: Can extract stock symbols from natural language and provide sentiment analysis
+6. **Broad Financial Coverage**: Market trends, sectors, investment strategies, economic analysis
 
-To add Bing grounding to this lesson, we need:
+## Technical Details
 
-1. **Find working examples** of Bing grounding with `Microsoft.Agents.AI`
-2. **Resolve package conflicts** between Agent Framework components
-3. **Understand deployment model** - does it require Azure AI Foundry hosting?
-4. **Document the API** for creating Bing grounding tools
+### Hosted Tools in Agent Framework
+The Agent Framework provides several hosted tools:
+- `HostedWebSearchTool`: Bing-powered web search
+- `HostedCodeInterpreterTool`: Code execution
+- `HostedFileSearchTool`: Document search
+- `HostedMCPTool`: Model Context Protocol servers
 
-## Recommendation
+### Usage Pattern
+```csharp
+// Add to tools collection
+new HostedWebSearchTool()
+```
 
-**For Now:**
-- Use **Semantic Kernel Lesson 6** for production Bing-grounded agents
-- Use **Agent Framework Lessons 1-5** for learning new patterns
-- Watch for **Microsoft Agent Framework documentation updates** on hosted tools
+The tool automatically integrates with the chat client's function calling mechanism to provide web search results when needed.
 
-**Future:**
-- Once Bing grounding API is documented, update this lesson
-- Microsoft Agent Framework preview is evolving rapidly
-- Check [Agent Framework GitHub](https://github.com/microsoft/agent-framework) for latest examples
+## Running the Sample
+
+```bash
+cd Solutions/Lesson6
+dotnet run
+```
+
+Example interaction:
+```
+User > What do you think about Microsoft's recent performance?
+Assistant > [Searches web for MSFT news/analysis and gets current stock price]
+Based on current market data showing MSFT at $515.74 and recent news 
+from [source], the sentiment rating is 8/10 - BUY. 
+Reasoning: Strong Q4 earnings, positive cloud growth trends...
+
+User > How is the renewable energy sector doing?
+Assistant > [Searches for renewable energy sector news and trends]
+The renewable energy sector is showing mixed signals...
+```
+
+## Configuration Requirements
+
+### Azure OpenAI Setup
+Ensure your `appsettings.json` has valid Azure OpenAI credentials:
+
+```json
+{
+  "AzureOpenAI": {
+    "Endpoint": "https://your-resource.openai.azure.com/",
+    "DeploymentName": "gpt-4o-mini",
+    "ApiKey": "your-key"
+  }
+}
+```
+
+### Bing Connection (Optional)
+For enhanced Bing grounding with connection-specific configuration, you may need to set up a Bing resource in Azure AI Foundry. The basic `HostedWebSearchTool()` works with default settings.
+
+## Discovery Process
+
+The implementation of `HostedWebSearchTool` was discovered through:
+1. Blog post confirming Bing grounding availability in Agent Framework
+2. Python examples showing `HostedWebSearchTool` usage pattern
+3. GitHub repository search finding .NET example in [05_MultiModelService/Program.cs](https://github.com/microsoft/agent-framework/blob/main/dotnet/samples/GettingStarted/Workflows/_Foundational/05_MultiModelService/Program.cs)
+
+### Key Finding
+Line 47 of the GitHub example shows:
+```csharp
+AIAgent factChecker = new ChatClientAgent(openai,
+    instructions: "Fact-checks reliable sources and flags inaccuracies.",
+    name: "fact_checker",
+    description: "...",
+    [new HostedWebSearchTool()]);  // ✅ WORKS IN .NET!
+```
+
+## Learning Outcomes
+- Understand how to integrate web search into Agent Framework agents
+- Learn the pattern for using hosted tools (`new HostedWebSearchTool()`)
+- See how to combine multiple tool types (custom functions + hosted tools)
+- Experience building agents that handle free-form financial queries
+- Learn how agents can intelligently extract relevant information from natural language
+- Experience multi-agent orchestration with web-grounded responses
 
 ## Resources
 
 - [Microsoft Agent Framework Blog](https://devblogs.microsoft.com/dotnet/introducing-microsoft-agent-framework-preview/)
 - [Agent Framework GitHub](https://github.com/microsoft/agent-framework)
+- [05_MultiModelService Example](https://github.com/microsoft/agent-framework/blob/main/dotnet/samples/GettingStarted/Workflows/_Foundational/05_MultiModelService/Program.cs) - Source of HostedWebSearchTool discovery
 - [Microsoft.Extensions.AI Docs](https://learn.microsoft.com/dotnet/ai/)
-- [Semantic Kernel Agents](https://learn.microsoft.com/semantic-kernel/frameworks/agent/)
