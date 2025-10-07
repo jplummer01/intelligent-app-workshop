@@ -1,0 +1,12 @@
+{
+  "StockService": {
+    "apiKey": "<StockServiceApiKey>"
+  },
+  "AIFoundryProject": {
+    "connectionString": "<AIFoundryConnectionString>",
+    "groundingWithBingConnectionId": "<GroundingWithBingConnectionId>",
+    "endpoint": "<AIFoundryEndpoint>",
+    "apiKey": "<AIFoundryApiKey>",
+    "deploymentName": "<modelDeploymentName>"
+  }
+}
