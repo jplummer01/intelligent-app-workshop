@@ -4,11 +4,10 @@ This hands-on workshop goes through the following lessons for creating intellige
 
 1. [Prerequisites](pre-reqs.md)
 1. [Lesson 1: Basic Agent Creation](lesson1.md)
-1. [Lesson 2: Conversation Memory with Agents](lesson2.md)
-1. [Lesson 3: Function Calling with Agents](lesson3.md)
-1. [Lesson 4: Specialized Stock Sentiment Agent](lesson4.md)
-1. [Lesson 5: Enhanced Financial Analysis with Web Search](lesson5.md)
-1. [Lesson 6: Agent Orchestration with Sequential Workflows](lesson6.md)
+1. [Lesson 2: Function Calling with Agents](lesson2.md)
+1. [Lesson 3: Specialized Stock Sentiment Agent](lesson3.md)
+1. [Lesson 4: Enhanced Financial Analysis with Web Search](lesson4.md)
+1. [Lesson 5: Agent Orchestration with Sequential Workflows](lesson5.md)
 
 Each lesson builds upon the previous one, teaching progressively more sophisticated Agent Framework concepts through practical financial advisory and portfolio analysis examples.
 

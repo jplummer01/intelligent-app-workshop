@@ -1,17 +1,17 @@
-# Lesson 5: Web Search Integration for Enhanced Analysis
+# Lesson 4: Web Search Integration for Enhanced Analysis
 
 This lesson adds web search capabilities to our financial agent, allowing it to access current market news and analysis for more comprehensive responses.
 
-1. Switch to Lesson 5 directory:
+1. Switch to Lesson 4 directory:
 
     ```bash
-    cd workshop-agent-framework/dotnet/Lessons/Lesson5
+    cd workshop-agent-framework/dotnet/Lessons/Lesson4
     ```
 
 1. Copy the configuration file from the Solutions directory:
 
     ```bash
-    cp ../../Solutions/Lesson5/appsettings.json .
+    cp ../../Solutions/Lesson4/appsettings.json .
     ```
 
 1. Run the application to see it works:

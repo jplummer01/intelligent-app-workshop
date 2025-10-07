@@ -1,17 +1,17 @@
-# Lesson 3: Adding Function Calling with Agent Framework
+# Lesson 2: Adding Function Calling with Agent Framework
 
-This lesson builds on lesson 2 by adding function calling capabilities to our agent. Function calling allows the AI model to invoke external functions to get real-time data or perform computations.
+This lesson builds on lesson 1 by adding function calling capabilities to our agent. Function calling allows the AI model to invoke external functions to get real-time data or perform computations.
 
-1. Switch to Lesson 3 directory:
+1. Switch to Lesson 2 directory:
 
     ```bash
-    cd workshop-agent-framework/dotnet/Lessons/Lesson3
+    cd workshop-agent-framework/dotnet/Lessons/Lesson2
     ```
 
 1. Copy the configuration file from the Solutions directory:
 
     ```bash
-    cp ../../Solutions/Lesson3/appsettings.json .
+    cp ../../Solutions/Lesson2/appsettings.json .
     ```
 
 1. Run the application to see it works:

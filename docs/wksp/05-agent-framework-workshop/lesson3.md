@@ -1,17 +1,17 @@
-# Lesson 4: Specialized Agent with Stock Sentiment Analysis
+# Lesson 3: Specialized Agent with Stock Sentiment Analysis
 
 This lesson creates a specialized agent focused on stock sentiment analysis using the Agent Framework with specific system instructions and function calling capabilities.
 
-1. Switch to Lesson 4 directory:
+1. Switch to Lesson 3 directory:
 
     ```bash
-    cd workshop-agent-framework/dotnet/Lessons/Lesson4
+    cd workshop-agent-framework/dotnet/Lessons/Lesson3
     ```
 
 1. Copy the configuration file from the Solutions directory:
 
     ```bash
-    cp ../../Solutions/Lesson4/appsettings.json .
+    cp ../../Solutions/Lesson3/appsettings.json .
     ```
 
 1. Run the application to see it works:

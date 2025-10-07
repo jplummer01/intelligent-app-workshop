@@ -1,11 +1,11 @@
-# Lesson 6: Sequential Workflows with Multiple Agents
+# Lesson 5: Sequential Workflows with Multiple Agents
 
 This lesson demonstrates sequential orchestration where multiple specialized agents work together in a defined sequence to analyze a complete investment portfolio.
 
-1. Switch to Lesson 6 directory:
+1. Switch to Lesson 5 directory:
 
     ```bash
-    cd workshop-agent-framework/dotnet/Lessons/Lesson6
+    cd workshop-agent-framework/dotnet/Lessons/Lesson5
     ```
 
 1. Run the application to see it works:
@@ -14,28 +14,18 @@ This lesson demonstrates sequential orchestration where multiple specialized age
     dotnet run
     ```
 
-1. Open `Program.cs` and create a sequential workflow with three specialized agents:
+1. Open `Program.cs` and replace the single agent approach with a sequential workflow of three specialized agents:
 
-    1. **TODO: Step 1** - Initialize the chat client and plugins:
+    1. **TODO: Step 1** - Add the workflows namespace:
 
         ```csharp
-        IChatClient chatClient = AgentFrameworkProvider.CreateChatClientWithApiKey();
-
-        // Initialize plugins
-        TimeInformationPlugin timePlugin = new();
-        HttpClient httpClient = new();
-        StockDataPlugin stockDataPlugin = new(new StocksService(httpClient));
-        HostedWebSearchTool webSearchTool = new();
-
-        // Create AI Functions from plugins
-        var timeTool = AIFunctionFactory.Create(timePlugin.GetCurrentUtcTime);
-        var stockPriceTool = AIFunctionFactory.Create(stockDataPlugin.GetStockPrice);
-        var stockPriceDateTool = AIFunctionFactory.Create(stockDataPlugin.GetStockPriceForDate);
+        using Microsoft.Agents.AI.Workflows;
         ```
 
-    1. **TODO: Step 2** - Create the Portfolio Research Agent:
+    1. **TODO: Step 2** - Replace the single financial agent with the Portfolio Research Agent. Remove the entire section from `// Financial Analysis Agent system instructions...` through the `financialAnalysisAgent` creation, and replace with:
 
         ```csharp
+        // Portfolio Research Agent - Gathers data on all stocks
         string researchAgentInstructions = """
             You are a Portfolio Research Agent. Your job is to gather comprehensive market data for stocks.
             
@@ -105,7 +95,7 @@ This lesson demonstrates sequential orchestration where multiple specialized age
         );
         ```
 
-    1. **TODO: Step 5** - Build and execute the sequential workflow:
+    1. **TODO: Step 4** - Build the sequential workflow:
 
         ```csharp
         // Build the workflow and convert it to an agent
@@ -114,28 +104,48 @@ This lesson demonstrates sequential orchestration where multiple specialized age
             riskAgent,
             advisorAgent
         ]).AsAgentAsync();
-        
-        // Run the workflow with streaming output
-        string? lastAgentName = null;
-        await foreach (var update in workflowAgent.RunStreamingAsync($"Analyze this portfolio of stocks: {userInput}"))
+        ```
+
+    1. **TODO: Step 5** - Replace the conversation loop (from `// Create a thread for conversation` onwards) with a direct portfolio analysis test:
+
+        ```csharp
+        // Test the portfolio analysis workflow
+        string portfolioQuery = "Analyze this portfolio: MSFT, AAPL, GOOGL, TSLA, NVDA. " +
+                               "Get current prices, assess risks, and provide recommendations.";
+
+        Console.WriteLine("🔍 Starting Portfolio Analysis...\n");
+
+        try
         {
-            // Print header when we see a new agent starting
-            if (lastAgentName != update.AuthorName)
+            string? lastAgentName = null;
+            await foreach (var update in workflowAgent.RunStreamingAsync(portfolioQuery))
             {
-                if (lastAgentName != null)
+                // Print header when we see a new agent starting
+                if (lastAgentName != update.AuthorName)
                 {
-                    Console.WriteLine(); // Add spacing between agents
+                    if (lastAgentName != null)
+                    {
+                        Console.WriteLine(); // Add spacing between agents
+                        Console.WriteLine(new string('-', 70));
+                        Console.WriteLine();
+                    }
+                    
+                    lastAgentName = update.AuthorName;
+                    Console.WriteLine($"[{update.AuthorName}]");
                     Console.WriteLine(new string('-', 70));
-                    Console.WriteLine();
                 }
                 
-                lastAgentName = update.AuthorName;
-                Console.WriteLine($"[{update.AuthorName}]");
-                Console.WriteLine(new string('-', 70));
+                // Stream the text output in real-time
+                Console.Write(update.Text);
             }
             
-            // Stream the text output in real-time
-            Console.Write(update.Text);
+            Console.WriteLine("\n" + new string('=', 70));
+            Console.WriteLine("✓ ANALYSIS COMPLETE");
+            Console.WriteLine(new string('=', 70));
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"❌ Error in portfolio analysis: {ex.Message}");
         }
         ```
 
@@ -145,14 +155,11 @@ This lesson demonstrates sequential orchestration where multiple specialized age
     dotnet run
     ```
 
-    Example input to test:
-    ```
-    Enter portfolio > MSFT, AAPL, TSLA, NVDA
-    ```
-
     Expected behavior:
-    1. **Portfolio Research Agent** gathers data on each stock
-    2. **Risk Assessment Agent** analyzes portfolio balance and risk
-    3. **Investment Advisor Agent** provides recommendations based on previous analysis
+    1. **Portfolio Research Agent** gathers current prices and market news for each stock (MSFT, AAPL, GOOGL, TSLA, NVDA)
+    2. **Risk Assessment Agent** analyzes portfolio balance, diversification, and assigns a risk score
+    3. **Investment Advisor Agent** provides buy/hold/sell recommendations and rebalancing suggestions
+
+    The output will show clear sections for each agent with streaming text as they work sequentially.
 
 This lesson demonstrates how the Agent Framework enables sophisticated multi-agent workflows where each agent specializes in a specific task, and their outputs flow sequentially to create comprehensive analysis.
