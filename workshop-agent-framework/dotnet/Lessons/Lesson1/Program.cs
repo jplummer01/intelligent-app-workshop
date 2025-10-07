@@ -3,22 +3,34 @@ using Microsoft.Extensions.AI;
 using Microsoft.Agents.AI;
 
 // TODO: Step 1 - Initialize the chat client using Microsoft Agent Framework
-// Hint: Use AgentFrameworkProvider.CreateChatClientWithApiKey()
+IChatClient chatClient = AgentFrameworkProvider.CreateChatClientWithApiKey();
 
 
 // TODO: Step 2 - Configure system message using Agent Framework pattern
-// Hint: Create a string with instructions for a friendly financial advisor
+string systemInstructions = "You are a friendly financial advisor that only emits financial advice in a creative and funny tone";
 
 
 // TODO: Step 3 - Create a ChatClientAgent with the chat client and system instructions
-// Hint: new ChatClientAgent(chatClient, instructions: systemInstructions, name: "FinancialAdvisor", description: "...")
+ChatClientAgent agent = new(
+    chatClient,
+    instructions: systemInstructions,
+    name: "FinancialAdvisor",
+    description: "A friendly financial advisor with a creative and funny tone"
+);
 
 
 // TODO: Step 4 - Create a thread for conversation
-// Hint: Use agent.GetNewThread()
+AgentThread thread = agent.GetNewThread();
 
 
 // Execute program.
+Console.WriteLine("=== Financial Advisor with Conversation Memory ===");
+Console.WriteLine("Agent Framework automatically maintains conversation history through AgentThread.");
+Console.WriteLine("Try asking follow-up questions to see the agent remember previous context!");
+Console.WriteLine("Example: Ask 'What should I invest in?' then 'Tell me more about that recommendation'");
+Console.WriteLine("Type 'quit' to exit.");
+Console.WriteLine();
+
 const string terminationPhrase = "quit";
 string? userInput;
 
@@ -39,7 +51,8 @@ do
         Console.Write("Assistant > ");
         
         // TODO: Step 5 - Use agent to respond to user input
-        // Hint: Use await agent.RunAsync(userInput, thread) and output the response
+        var response = await agent.RunAsync(userInput, thread);
+        Console.WriteLine(response);
 
     }
 }

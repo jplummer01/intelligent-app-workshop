@@ -1,159 +1,175 @@
-# Lesson 6: Financial Analysis Agent with Web Search ✅
+# Lesson 7: Multi-Agent Sequential Orchestration - Portfolio Analyzer ✅
 
 ## Overview
-This lesson demonstrates how to use **HostedWebSearchTool** (Bing grounding) with Microsoft Agent Framework to create an intelligent financial analysis agent that can handle free-form questions and search the web for real-time information.
+This lesson demonstrates **sequential multi-agent orchestration** with Microsoft Agent Framework using the built-in `AgentWorkflowBuilder.BuildSequential()` API. Three specialized agents work together in a pipeline to analyze an investment portfolio.
 
-## Key Concepts
+## The Orchestration Pattern
 
-### HostedWebSearchTool
-The `HostedWebSearchTool` class from the `Microsoft.Agents.AI` namespace provides built-in web search capabilities powered by Bing:
+### Three Specialized Agents
 
-```csharp
-using Microsoft.Agents.AI;
+1. **Portfolio Research Agent**
+   - Gathers market data and news for each stock
+   - Uses web search and stock price tools
+   - Outputs: Research report with current prices and sentiment
 
-new HostedWebSearchTool()  // Bing grounding for web search
+2. **Risk Assessment Agent**
+   - Analyzes portfolio composition and diversification
+   - Identifies sector concentration and risk factors
+   - Outputs: Risk score (1-10) and concern areas
+
+3. **Investment Advisor Agent**
+   - Synthesizes research and risk analysis
+   - Provides actionable recommendations
+   - Outputs: Buy/hold/sell recommendations and rebalancing suggestions
+
+### Orchestration Flow
+
+```
+User Input: "MSFT, AAPL, TSLA, NVDA"
+         ↓
+    Step 1: Research Agent
+         ↓ (passes research data)
+    Step 2: Risk Agent
+         ↓ (passes risk analysis)
+    Step 3: Advisor Agent
+         ↓
+    Final Output: Complete portfolio analysis
 ```
 
-### ChatClientAgent with Web Search
-Combine AI agents with web search and custom functions for comprehensive financial analysis:
+## Key Implementation Concepts
+
+### Built-in Sequential Orchestration
 
 ```csharp
-var agent = new ChatClientAgent(chatClient, new ChatClientAgentOptions(
-    instructions: "You are a financial analysis agent with web search capabilities...",
-    name: "FinancialAnalysisAgent",
-    description: "Provides comprehensive financial analysis using web search and market data.")
+using Microsoft.Agents.AI.Workflows;
+
+// Build the sequential workflow - agents execute in order
+var workflow = AgentWorkflowBuilder.BuildSequential([
+    researchAgent,
+    riskAgent,
+    advisorAgent
+]);
+
+// Run the workflow
+var messages = new List<ChatMessage> { 
+    new(ChatRole.User, "Analyze this portfolio: MSFT, AAPL") 
+};
+StreamingRun run = await InProcessExecution.StreamAsync(workflow, messages);
+await run.TrySendMessageAsync(new TurnToken(emitEvents: true));
+
+// Process events
+await foreach (WorkflowEvent evt in run.WatchStreamAsync())
 {
-    ChatOptions = new ChatOptions
+    if (evt is AgentRunUpdateEvent updateEvent)
     {
-        Tools = [
-            AIFunctionFactory.Create(timePlugin.GetCurrentUtcTime),
-            AIFunctionFactory.Create(stockDataPlugin.GetStockPrice),
-            new HostedWebSearchTool()  // Web search capability
-        ]
+        Console.WriteLine($"[{updateEvent.ExecutorId}]: {updateEvent.Data}");
     }
-});
-```
-
-## Migration from Semantic Kernel
-
-### Semantic Kernel Approach
-```csharp
-// SK uses Azure AI Agent Service with Azure.AI.Agents.Persistent
-var agentMetadata = await assistantsClient.Administration.CreateAgentAsync(
-    model: model,
-    name: "StockSentimentAgent",
-    instructions: instructions,
-    tools: [new BingGroundingToolDefinition()]);
-```
-
-### Agent Framework Approach
-```csharp
-// Agent Framework uses HostedWebSearchTool from Microsoft.Agents.AI
-var agent = new ChatClientAgent(chatClient, new ChatClientAgentOptions(
-    instructions: instructions,
-    name: "FinancialAnalysisAgent")
-{
-    ChatOptions = new ChatOptions
+    else if (evt is WorkflowCompletedEvent completed)
     {
-        Tools = [
-            new HostedWebSearchTool()  // Direct web search integration
-        ]
+        var result = (List<ChatMessage>)completed.Data!;
+        // Display final conversation
     }
-});
+}
 ```
 
-## Features Demonstrated
+### Agent Specialization
 
-1. **Free-form Financial Queries**: Handles any financial question or topic
-2. **Web Search Integration**: Real-time web search using Bing for current market information
-3. **Multi-Tool Orchestration**: Combines web search with custom functions
-4. **Agent Threads**: Maintains conversation context across interactions
-5. **Intelligent Stock Analysis**: Can extract stock symbols from natural language and provide sentiment analysis
-6. **Broad Financial Coverage**: Market trends, sectors, investment strategies, economic analysis
+Each agent has:
+- **Specific instructions** defining its role
+- **Relevant tools** for its task (or none if it synthesizes)
+- **Clear input/output contract**
 
-## Technical Details
+### Data Flow
 
-### Hosted Tools in Agent Framework
-The Agent Framework provides several hosted tools:
-- `HostedWebSearchTool`: Bing-powered web search
-- `HostedCodeInterpreterTool`: Code execution
-- `HostedFileSearchTool`: Document search
-- `HostedMCPTool`: Model Context Protocol servers
-
-### Usage Pattern
 ```csharp
-// Add to tools collection
-new HostedWebSearchTool()
+// Research Agent → produces research data
+string researchResults = researchResponse?.Messages?.Last()?.Text;
+
+// Risk Agent → consumes research, produces risk analysis
+var riskResponse = await riskAgent.RunAsync(
+    $"Portfolio: {portfolioStocks}\nResearch:\n{researchResults}"
+);
+
+// Advisor Agent → consumes both, produces recommendations
+var advisorResponse = await advisorAgent.RunAsync(
+    $"Research:\n{researchResults}\nRisk:\n{riskAnalysis}"
+);
 ```
 
-The tool automatically integrates with the chat client's function calling mechanism to provide web search results when needed.
+## Why This Orchestration Pattern?
+
+✅ **Separation of Concerns**: Each agent has one clear responsibility  
+✅ **Modularity**: Easy to add/remove/replace agents  
+✅ **Transparency**: User sees each agent's contribution  
+✅ **Composability**: Output of one agent feeds into the next  
+✅ **Testability**: Each agent can be tested independently  
 
 ## Running the Sample
 
 ```bash
-cd Solutions/Lesson6
+cd Solutions/Lesson7
 dotnet run
 ```
 
 Example interaction:
 ```
-User > What do you think about Microsoft's recent performance?
-Assistant > [Searches web for MSFT news/analysis and gets current stock price]
-Based on current market data showing MSFT at $515.74 and recent news 
-from [source], the sentiment rating is 8/10 - BUY. 
-Reasoning: Strong Q4 earnings, positive cloud growth trends...
+Enter portfolio > MSFT, AAPL, TSLA, NVDA
 
-User > How is the renewable energy sector doing?
-Assistant > [Searches for renewable energy sector news and trends]
-The renewable energy sector is showing mixed signals...
+[ORCHESTRATION EVENTS]
+[PortfolioResearchAgent]: Researching stocks...
+[RiskAssessmentAgent]: Analyzing risk profile...
+[InvestmentAdvisorAgent]: Generating recommendations...
+
+[FINAL CONVERSATION]
+User: Analyze this portfolio of stocks: MSFT, AAPL, TSLA, NVDA
+PortfolioResearchAgent: [Research results with prices and sentiment]
+RiskAssessmentAgent: [Risk analysis with concentration score]
+InvestmentAdvisorAgent: [Investment recommendations]
 ```
 
-## Configuration Requirements
+## Advanced Orchestration Patterns
 
-### Azure OpenAI Setup
-Ensure your `appsettings.json` has valid Azure OpenAI credentials:
+This lesson uses **sequential orchestration** (Agent 1 → Agent 2 → Agent 3).
 
-```json
-{
-  "AzureOpenAI": {
-    "Endpoint": "https://your-resource.openai.azure.com/",
-    "DeploymentName": "gpt-4o-mini",
-    "ApiKey": "your-key"
-  }
-}
-```
-
-### Bing Connection (Optional)
-For enhanced Bing grounding with connection-specific configuration, you may need to set up a Bing resource in Azure AI Foundry. The basic `HostedWebSearchTool()` works with default settings.
-
-## Discovery Process
-
-The implementation of `HostedWebSearchTool` was discovered through:
-1. Blog post confirming Bing grounding availability in Agent Framework
-2. Python examples showing `HostedWebSearchTool` usage pattern
-3. GitHub repository search finding .NET example in [05_MultiModelService/Program.cs](https://github.com/microsoft/agent-framework/blob/main/dotnet/samples/GettingStarted/Workflows/_Foundational/05_MultiModelService/Program.cs)
-
-### Key Finding
-Line 47 of the GitHub example shows:
-```csharp
-AIAgent factChecker = new ChatClientAgent(openai,
-    instructions: "Fact-checks reliable sources and flags inaccuracies.",
-    name: "fact_checker",
-    description: "...",
-    [new HostedWebSearchTool()]);  // ✅ WORKS IN .NET!
-```
+Other patterns you could explore:
+- **Parallel Orchestration**: Multiple agents work simultaneously
+- **Conditional Orchestration**: Route to different agents based on results
+- **Iterative Orchestration**: Agents refine each other's work in loops
+- **Hierarchical Orchestration**: Manager agent delegates to worker agents
 
 ## Learning Outcomes
-- Understand how to integrate web search into Agent Framework agents
-- Learn the pattern for using hosted tools (`new HostedWebSearchTool()`)
-- See how to combine multiple tool types (custom functions + hosted tools)
-- Experience building agents that handle free-form financial queries
-- Learn how agents can intelligently extract relevant information from natural language
-- Experience multi-agent orchestration with web-grounded responses
+
+- Understand how to coordinate multiple agents in a workflow
+- Learn to pass data between agents effectively
+- See the value of agent specialization vs. single generalist agent
+- Experience building complex AI workflows with simple patterns
+- Understand when to use orchestration vs. single-agent approaches
+
+## When to Use Multi-Agent Orchestration
+
+**Use orchestration when:**
+- Tasks have distinct, separable concerns
+- Different agents need different tools/capabilities
+- You want transparency into each step
+- Results build upon previous analysis
+
+**Use single agent when:**
+- Task is straightforward and unified
+- All tools can be provided to one agent
+- Simplicity is more important than modularity
+
+## Comparison to Lesson 6
+
+| Aspect | Lesson 6 | Lesson 7 |
+|--------|----------|----------|
+| Agents | 1 (Financial Analysis) | 3 (Research, Risk, Advisor) |
+| Pattern | Single agent with all tools | Sequential orchestration |
+| Input | Free-form question | Portfolio list |
+| Output | Direct answer | Multi-step analysis |
+| Best For | General queries | Structured workflows |
 
 ## Resources
 
-- [Microsoft Agent Framework Blog](https://devblogs.microsoft.com/dotnet/introducing-microsoft-agent-framework-preview/)
-- [Agent Framework GitHub](https://github.com/microsoft/agent-framework)
-- [05_MultiModelService Example](https://github.com/microsoft/agent-framework/blob/main/dotnet/samples/GettingStarted/Workflows/_Foundational/05_MultiModelService/Program.cs) - Source of HostedWebSearchTool discovery
-- [Microsoft.Extensions.AI Docs](https://learn.microsoft.com/dotnet/ai/)
+- [Microsoft Agent Framework Docs](https://github.com/microsoft/agent-framework)
+- [Multi-Agent Patterns](https://learn.microsoft.com/azure/ai-studio/concepts/agent-patterns)
+- [Agent Orchestration Best Practices](https://devblogs.microsoft.com/dotnet/introducing-microsoft-agent-framework-preview/)

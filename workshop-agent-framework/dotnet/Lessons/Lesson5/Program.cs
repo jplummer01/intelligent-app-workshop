@@ -4,49 +4,74 @@ using Core.Utilities.Services;
 using Core.Utilities.Extensions;
 using Microsoft.Agents.AI;
 using Microsoft.Extensions.AI;
+// TODO: Step 1 - Add the Workflows namespace for sequential orchestration
 
-// TODO: Step 1 - Initialize the chat client with Agent Framework  
+// Initialize the chat client with Agent Framework  
+IChatClient chatClient = AgentFrameworkProvider.CreateChatClientWithApiKey();
 
+// Initialize plugins
+TimeInformationPlugin timePlugin = new();
+HttpClient httpClient = new();
+StockDataPlugin stockDataPlugin = new(new StocksService(httpClient));
 
-// TODO: Step 2 - Initialize plugins including web search
-// Hint: Add HostedWebSearchTool for enhanced analysis capabilities
-// TimeInformationPlugin timePlugin = new();
-// HttpClient httpClient = new();
-// StockDataPlugin stockDataPlugin = new(new StocksService(httpClient));
-// HostedWebSearchTool webSearchTool = new();
+// Create web search tool for enhanced sentiment analysis
+HostedWebSearchTool webSearchTool = new();
 
+// Create AI Functions from plugins
+var timeTool = AIFunctionFactory.Create(timePlugin.GetCurrentUtcTime);
+var stockPriceTool = AIFunctionFactory.Create(stockDataPlugin.GetStockPrice);
+var stockPriceDateTool = AIFunctionFactory.Create(stockDataPlugin.GetStockPriceForDate);
 
-// TODO: Step 3 - Create AI Functions from plugins including web search
-// Hint: Convert all plugin methods including the web search tool
+// Financial Analysis Agent system instructions with comprehensive capabilities
+string financialAnalysisInstructions = """
+    You are a Financial Analysis Agent with web search capabilities. Provide direct, comprehensive financial analysis and insights based on user questions.
 
+    CAPABILITIES:
+    - Analyze individual stocks, market sectors, or broader financial topics
+    - Extract stock symbols from user queries when relevant (e.g., "What do you think about Microsoft?" -> analyze MSFT)
+    - Handle free-form questions about market trends, economic conditions, investment strategies
+    - Use stock sentiment scale from 1 to 10 where sentiment is 1 for sell and 10 for buy (when analyzing specific stocks)
+    - Provide ratings, recommendations (buy/hold/sell), and detailed reasoning for stock-specific queries
 
-// TODO: Step 4 - Create Financial Analysis Agent with comprehensive instructions
-// Create system instructions that define an agent capable of:
-// - Analyzing stocks, sectors, and financial topics
-// - Using web search for current market news and sentiment
-// - Extracting stock symbols from natural language queries
-// - Using 1-10 sentiment scale for stock analysis
-// - Providing sources for all analysis
+    CRITICAL RULES:
+    - Provide your complete analysis in a SINGLE response - do not say you're "gathering data" or "working on it"
+    - For stock-specific questions: Use web search to gather current market news, analyst opinions, and sentiment data
+    - For general financial questions: Use web search to find relevant financial news, economic data, and expert analysis
+    - Combine web search results with available stock price data when analyzing specific companies
+    - ALWAYS include a dedicated "Sources" section at the end of your response listing all the specific sources you found through web search
+    - For each source, include the title, URL (if available), and a brief description of what information it provided
+    - Focus on recent news, market trends, and expert analysis
+    - Be transparent about which information came from which sources
+    - If a user asks about a specific company without mentioning the stock symbol, try to identify the relevant ticker symbol
+    - Answer immediately with your full analysis - do not provide status updates or say you're collecting information
+    """;
 
+// Create the Financial Analysis Agent using ChatClientAgent
+ChatClientAgent financialAnalysisAgent = new(
+    chatClient,
+    instructions: financialAnalysisInstructions,
+    name: "FinancialAnalysisAgent",
+    description: "An intelligent agent that provides comprehensive financial analysis using web search and market data",
+    tools: [
+        timeTool,
+        stockPriceTool, 
+        stockPriceDateTool,
+        webSearchTool
+    ]
+);
 
-// TODO: Step 5 - Create the Financial Analysis Agent using ChatClientAgent
-// Hint: Include all tools (time, stock data, and web search)
+// TODO: Step 2 - Create three specialized agents for portfolio analysis
 
+// TODO: Step 3 - Create Risk Assessment Agent  
 
-// TODO: Step 6 - Create a thread for conversation
+// TODO: Step 4 - Create Investment Advisor Agent
 
+// Create a thread for conversation
+AgentThread thread = financialAnalysisAgent.GetNewThread();
 
 // Execute program
 const string terminationPhrase = "quit";
 string? userInput;
-
-Console.WriteLine("=== Financial Analysis Agent with Microsoft Agent Framework ===");
-Console.WriteLine("This agent provides comprehensive financial analysis using web search and market data.");
-Console.WriteLine("Ask any financial question - about specific stocks, market trends, sectors, or investment strategies.");
-Console.WriteLine("Examples: 'What do you think about Microsoft?', 'How is the tech sector performing?', 'Should I invest in renewable energy stocks?'");
-Console.WriteLine("Type 'quit' to exit.");
-Console.WriteLine("==================================================================================");
-Console.WriteLine();
 
 do
 {
@@ -64,26 +89,11 @@ do
     {
         Console.Write("Assistant > ");
         
-        try
-        {
-            // TODO: Step 7 - Use the agent to process complex financial queries
-            // Hint: The agent will automatically use web search and stock data as needed
-            // var response = await financialAnalysisAgent.RunAsync(userInput, thread);
-            // Console.WriteLine(response);
-
-        }
-        catch (Exception ex)
-        {
-            Console.WriteLine($"Error: {ex.Message}");
-            if (ex.InnerException != null)
-            {
-                Console.WriteLine($"Inner exception: {ex.InnerException.Message}");
-            }
-        }
+        // Use single agent for comprehensive financial analysis
+        var response = await financialAnalysisAgent.RunAsync(userInput, thread);
+        Console.WriteLine(response);
         
-        Console.WriteLine();
+        // TODO: Step 5 - Replace single agent with sequential workflow
     }
 }
 while (userInput != terminationPhrase);
-
-Console.WriteLine("Thank you for using the Financial Analysis Agent!");

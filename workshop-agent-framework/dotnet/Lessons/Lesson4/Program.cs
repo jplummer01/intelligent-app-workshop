@@ -5,42 +5,58 @@ using Core.Utilities.Extensions;
 using Microsoft.Agents.AI;
 using Microsoft.Extensions.AI;
 
-// TODO: Step 1 - Initialize the chat client with Agent Framework  
+// Initialize the chat client with Agent Framework  
+IChatClient chatClient = AgentFrameworkProvider.CreateChatClientWithApiKey();
 
+// Initialize plugins
+TimeInformationPlugin timePlugin = new();
+HttpClient httpClient = new();
+StockDataPlugin stockDataPlugin = new(new StocksService(httpClient));
 
-// TODO: Step 2 - Initialize plugins
-// Hint: Same as previous lessons - TimeInformationPlugin, StockDataPlugin
+// Initialize web search tool for sentiment analysis
+HostedWebSearchTool webSearchTool = new();
 
+// Create AI Functions from plugins
+var timeTool = AIFunctionFactory.Create(timePlugin.GetCurrentUtcTime);
+var stockPriceTool = AIFunctionFactory.Create(stockDataPlugin.GetStockPrice);
+var stockPriceDateTool = AIFunctionFactory.Create(stockDataPlugin.GetStockPriceForDate);
 
-// TODO: Step 3 - Create AI Functions from plugins
-// Hint: Use AIFunctionFactory.Create() for each plugin method
+// Stock Sentiment Agent system instructions - defines the agent's behavior and rules
+string stockSentimentAgentInstructions = """
+    You are a Stock Sentiment Agent. Your responsibility is to find the stock sentiment for a given Stock.
 
+    RULES:
+    - Use stock sentiment scale from 1 to 10 where stock sentiment is 1 for sell and 10 for buy.
+    - Provide the rating in your response and a recommendation to buy, hold or sell.
+    - Include the reasoning behind your recommendation.
+    - Include the source of the sentiment in your response.
+    - Focus on technical analysis based on stock price data and general market knowledge.
+    """;
 
-// TODO: Step 4 - Create Stock Sentiment Agent with specialized instructions
-// Define system instructions for a stock sentiment agent that:
-// - Uses stock sentiment scale from 1 to 10 (1=sell, 10=buy)
-// - Provides rating, recommendation (buy/hold/sell), and reasoning
-// - Includes sources in responses
-// - Focuses on technical analysis
+// TODO: Step 1 - Enhance the system instructions for comprehensive financial analysis
 
+// Create the Stock Sentiment Agent using ChatClientAgent
+ChatClientAgent stockSentimentAgent = new(
+    chatClient,
+    instructions: stockSentimentAgentInstructions,
+    name: "StockSentimentAgent",
+    description: "An intelligent agent that analyzes stock sentiment using market data",
+    tools: [
+        timeTool,
+        stockPriceTool, 
+        stockPriceDateTool,
+        webSearchTool
+    ]
+);
 
-// TODO: Step 5 - Create the Stock Sentiment Agent using ChatClientAgent
-// Hint: Use the specialized instructions and include the tools
+// TODO: Step 2 - Update agent name and description to reflect enhanced capabilities
 
-
-// TODO: Step 6 - Create a thread for conversation
-
+// Create a thread for conversation
+AgentThread thread = stockSentimentAgent.GetNewThread();
 
 // Execute program
 const string terminationPhrase = "quit";
 string? userInput;
-
-Console.WriteLine("=== Stock Sentiment Agent with Microsoft Agent Framework ===");
-Console.WriteLine("This agent analyzes stock sentiment using current market data and technical analysis.");
-Console.WriteLine("Enter a stock symbol (e.g., 'MSFT', 'AAPL') or ask questions about stocks.");
-Console.WriteLine("Type 'quit' to exit.");
-Console.WriteLine("===============================================================");
-Console.WriteLine();
 
 do
 {
@@ -58,22 +74,9 @@ do
     {
         Console.Write("Assistant > ");
         
-        try
-        {
-            // TODO: Step 7 - Use the agent to process the user message
-            // Hint: Use agent.RunAsync() with error handling
-            // var response = await stockSentimentAgent.RunAsync(userInput, thread);
-            // Console.WriteLine(response);
-
-        }
-        catch (Exception ex)
-        {
-            Console.WriteLine($"Error: {ex.Message}");
-        }
-        
-        Console.WriteLine();
+        // Use agent with automatic function calling
+        var response = await stockSentimentAgent.RunAsync(userInput, thread);
+        Console.WriteLine(response);
     }
 }
 while (userInput != terminationPhrase);
-
-Console.WriteLine("Thank you for using the Stock Sentiment Agent!");

@@ -1,6 +1,6 @@
-# Lesson 1: Basic Agent Creation
+# Lesson 1: Basic Agent Creation with Conversation Memory
 
-In this lesson we will create a basic AI agent using Microsoft Agent Framework with system instructions and conversation capabilities.
+In this lesson we will create a basic AI agent using Microsoft Agent Framework with system instructions and automatic conversation memory capabilities.
 
 1. Ensure all [pre-requisites](pre-reqs.md) are met and installed.
 
@@ -8,6 +8,12 @@ In this lesson we will create a basic AI agent using Microsoft Agent Framework w
 
     ```bash
     cd workshop-agent-framework/dotnet/Lessons/Lesson1
+    ```
+
+1. Copy the configuration file from the Solutions directory:
+
+    ```bash
+    cp ../../Solutions/Lesson1/appsettings.json .
     ```
 
 1. Open the project in your favorite IDE or text editor.
@@ -79,3 +85,25 @@ In this lesson we will create a basic AI agent using Microsoft Agent Framework w
     
         Remember, always research like you're planning the perfect vacation and balance your choices like you balance a pizza with just the right amount of toppings. And of course, consult a real-world financial oracle before making any big moves. Bon appétit in the stock market buffet!
     ```
+
+## Testing Conversation Memory
+
+Agent Framework automatically maintains conversation history through the `AgentThread`. Test this feature by asking follow-up questions:
+
+1. After receiving the initial response, ask a follow-up question that references the previous conversation:
+
+    ```txt
+    User > Tell me more about the Tech Tango category you mentioned
+    ```
+
+2. The agent should remember your previous conversation and provide specific details about the tech stocks category without you having to repeat your original question.
+
+3. Try another follow-up:
+
+    ```txt
+    User > Which of those five categories would you recommend for a beginner?
+    ```
+
+4. Again, the agent should reference the categories it mentioned earlier, demonstrating that conversation context is automatically preserved.
+
+**Key Learning**: Notice how Agent Framework automatically maintains conversation history without any additional code. The `AgentThread` handles all conversation memory management for you.

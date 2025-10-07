@@ -1,11 +1,11 @@
-# Lesson 5: Web Search Integration for Enhanced Analysis
+# Lesson 6: Sequential Workflows with Multiple Agents
 
-This lesson adds web search capabilities to our financial agent, allowing it to access current market news and analysis for more comprehensive responses.
+This lesson demonstrates sequential orchestration where multiple specialized agents work together in a defined sequence to analyze a complete investment portfolio.
 
-1. Switch to Lesson 5 directory:
+1. Switch to Lesson 6 directory:
 
     ```bash
-    cd workshop-agent-framework/dotnet/Lessons/Lesson5
+    cd workshop-agent-framework/dotnet/Lessons/Lesson6
     ```
 
 1. Run the application to see it works:
@@ -14,9 +14,9 @@ This lesson adds web search capabilities to our financial agent, allowing it to 
     dotnet run
     ```
 
-1. Open `Program.cs` and add web search capabilities to the financial agent:
+1. Open `Program.cs` and create a sequential workflow with three specialized agents:
 
-    1. **TODO: Step 1** - Initialize the chat client, plugins, and web search tool:
+    1. **TODO: Step 1** - Initialize the chat client and plugins:
 
         ```csharp
         IChatClient chatClient = AgentFrameworkProvider.CreateChatClientWithApiKey();
@@ -25,93 +25,134 @@ This lesson adds web search capabilities to our financial agent, allowing it to 
         TimeInformationPlugin timePlugin = new();
         HttpClient httpClient = new();
         StockDataPlugin stockDataPlugin = new(new StocksService(httpClient));
-
-        // Create web search tool for enhanced sentiment analysis
         HostedWebSearchTool webSearchTool = new();
-        ```
 
-    1. **TODO: Step 2** - Create AI Functions including web search:
-
-        ```csharp
+        // Create AI Functions from plugins
         var timeTool = AIFunctionFactory.Create(timePlugin.GetCurrentUtcTime);
         var stockPriceTool = AIFunctionFactory.Create(stockDataPlugin.GetStockPrice);
         var stockPriceDateTool = AIFunctionFactory.Create(stockDataPlugin.GetStockPriceForDate);
         ```
 
-    1. **TODO: Step 3** - Define enhanced system instructions with web search capabilities:
+    1. **TODO: Step 2** - Create the Portfolio Research Agent:
 
         ```csharp
-        string stockSentimentAgentInstructions = """
-            You are a Financial Analysis Agent with web search capabilities. Provide direct, comprehensive financial analysis and insights based on user questions.
-
-            CAPABILITIES:
-            - Analyze individual stocks, market sectors, or broader financial topics
-            - Extract stock symbols from user queries when relevant (e.g., "What do you think about Microsoft?" -> analyze MSFT)
-            - Handle free-form questions about market trends, economic conditions, investment strategies
-            - Use stock sentiment scale from 1 to 10 where sentiment is 1 for sell and 10 for buy (when analyzing specific stocks)
-            - Provide ratings, recommendations (buy/hold/sell), and detailed reasoning for stock-specific queries
-
-            CRITICAL RULES:
-            - Provide your complete analysis in a SINGLE response - do not say you're "gathering data" or "working on it"
-            - For stock-specific questions: Use web search to gather current market news, analyst opinions, and sentiment data
-            - For general financial questions: Use web search to find relevant financial news, economic data, and expert analysis
-            - Combine web search results with available stock price data when analyzing specific companies
-            - ALWAYS include a dedicated "Sources" section at the end of your response listing all the specific sources you found through web search
-            - For each source, include the title, URL (if available), and a brief description of what information it provided
-            - Focus on recent news, market trends, and expert analysis
-            - Be transparent about which information came from which sources
-            - If a user asks about a specific company without mentioning the stock symbol, try to identify the relevant ticker symbol
-            - Answer immediately with your full analysis - do not provide status updates or say you're collecting information
+        string researchAgentInstructions = """
+            You are a Portfolio Research Agent. Your job is to gather comprehensive market data for stocks.
+            
+            For each stock symbol provided:
+            - Get the current stock price
+            - Search the web for recent news and market sentiment
+            - Provide a brief summary of each stock's current situation
+            
+            Provide your complete research in a SINGLE response with clear sections for each stock.
+            Format your response as a research report with stock symbols as headers.
             """;
-        ```
 
-    1. **TODO: Step 4** - Create the Financial Analysis Agent with web search capabilities:
-
-        ```csharp
-        ChatClientAgent financialAnalysisAgent = new(
+        ChatClientAgent researchAgent = new(
             chatClient,
-            instructions: stockSentimentAgentInstructions,
-            name: "FinancialAnalysisAgent",
-            description: "An intelligent agent that provides comprehensive financial analysis using web search and market data",
-            tools: [
-                timeTool,
-                stockPriceTool, 
-                stockPriceDateTool,
-                webSearchTool
-            ]
+            instructions: researchAgentInstructions,
+            name: "PortfolioResearchAgent",
+            description: "Gathers market data and news for portfolio stocks",
+            tools: [stockPriceTool, webSearchTool, timeTool]
         );
         ```
 
-    1. **TODO: Step 5** - Create thread and process requests with web search:
+    1. **TODO: Step 3** - Create the Risk Assessment Agent:
 
         ```csharp
-        AgentThread thread = financialAnalysisAgent.GetNewThread();
+        string riskAgentInstructions = """
+            You are a Risk Assessment Agent. Analyze the portfolio composition and risk profile.
+            
+            Based on the research provided:
+            - Identify sector concentration (tech-heavy, diversified, etc.)
+            - Assess portfolio balance and diversification
+            - Calculate a risk score from 1-10 (1=very safe, 10=very risky)
+            - Highlight any concerns about over-concentration
+            
+            Provide your complete analysis in a SINGLE response.
+            Be concise and actionable.
+            """;
+
+        ChatClientAgent riskAgent = new(
+            chatClient,
+            instructions: riskAgentInstructions,
+            name: "RiskAssessmentAgent",
+            description: "Analyzes portfolio risk and diversification"
+        );
+        ```
+
+    1. **TODO: Step 4** - Create the Investment Advisor Agent:
+
+        ```csharp
+        string advisorAgentInstructions = """
+            You are an Investment Advisor Agent. Synthesize research and risk analysis into actionable recommendations.
+            
+            Based on the research and risk assessment:
+            - Provide an overall portfolio health score (1-10)
+            - Give specific buy/hold/sell recommendations for each stock
+            - Suggest rebalancing actions if needed
+            - Provide 2-3 key takeaways
+            
+            Provide your complete recommendations in a SINGLE response.
+            Be clear, concise, and actionable.
+            """;
+
+        ChatClientAgent advisorAgent = new(
+            chatClient,
+            instructions: advisorAgentInstructions,
+            name: "InvestmentAdvisorAgent",
+            description: "Provides investment recommendations based on research and risk analysis"
+        );
+        ```
+
+    1. **TODO: Step 5** - Build and execute the sequential workflow:
+
+        ```csharp
+        // Build the workflow and convert it to an agent
+        AIAgent workflowAgent = await AgentWorkflowBuilder.BuildSequential([
+            researchAgent,
+            riskAgent,
+            advisorAgent
+        ]).AsAgentAsync();
         
-        var response = await financialAnalysisAgent.RunAsync(userInput, thread);
-        
-        if (response?.Messages?.Any() == true)
+        // Run the workflow with streaming output
+        string? lastAgentName = null;
+        await foreach (var update in workflowAgent.RunStreamingAsync($"Analyze this portfolio of stocks: {userInput}"))
         {
-            var lastMessage = response.Messages.Last();
-            Console.WriteLine(lastMessage.Text ?? "No response generated.");
+            // Print header when we see a new agent starting
+            if (lastAgentName != update.AuthorName)
+            {
+                if (lastAgentName != null)
+                {
+                    Console.WriteLine(); // Add spacing between agents
+                    Console.WriteLine(new string('-', 70));
+                    Console.WriteLine();
+                }
+                
+                lastAgentName = update.AuthorName;
+                Console.WriteLine($"[{update.AuthorName}]");
+                Console.WriteLine(new string('-', 70));
+            }
+            
+            // Stream the text output in real-time
+            Console.Write(update.Text);
         }
         ```
 
-1. Test the enhanced agent with various financial queries:
+1. Test the sequential workflow with portfolio analysis:
 
     ```bash
     dotnet run
     ```
 
-    Example questions to test:
+    Example input to test:
     ```
-    User > What do you think about Microsoft?
-    Assistant > (should search for recent Microsoft news and provide analysis with sources)
-    
-    User > How is the tech sector performing?
-    Assistant > (should search for tech sector news and provide comprehensive analysis)
-    
-    User > Should I invest in renewable energy stocks?
-    Assistant > (should search for renewable energy market trends and provide recommendations)
+    Enter portfolio > MSFT, AAPL, TSLA, NVDA
     ```
 
-This lesson demonstrates how web search integration enhances the agent's ability to provide current, well-sourced financial analysis by accessing real-time market information and expert opinions.
+    Expected behavior:
+    1. **Portfolio Research Agent** gathers data on each stock
+    2. **Risk Assessment Agent** analyzes portfolio balance and risk
+    3. **Investment Advisor Agent** provides recommendations based on previous analysis
+
+This lesson demonstrates how the Agent Framework enables sophisticated multi-agent workflows where each agent specializes in a specific task, and their outputs flow sequentially to create comprehensive analysis.

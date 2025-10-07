@@ -1,86 +1,94 @@
-# Lesson 4: Specialized Agent - Stock Sentiment Analysis
+# Lesson 5: Enhanced Financial Analysis with Web Search
 
 ## Overview
-This lesson demonstrates how to create a specialized AI agent with domain-specific instructions and behavior. You'll build a Stock Sentiment Agent that analyzes stocks using a standardized scoring system and provides structured investment recommendations.
+This lesson demonstrates advanced agent capabilities by adding web search functionality to create a comprehensive financial analysis agent. You'll build an agent that can analyze stocks, market trends, and financial topics using both real-time market data and current web information.
 
 ## Learning Objectives
-- Create specialized agents with domain-specific instructions
-- Implement structured response formats and scoring systems
-- Combine function calling with specialized analysis
-- Design professional-grade AI agent behavior
+- Integrate multiple data sources (market data + web search)
+- Create sophisticated agent instructions for complex analysis
+- Handle natural language queries and extract relevant information
+- Provide comprehensive analysis with source attribution
+- Build production-ready financial analysis capabilities
 
 ## Key Concepts
-- **Specialized Instructions**: Detailed system prompts that define agent behavior
-- **Structured Responses**: Consistent output formats for professional applications
-- **Domain Expertise**: Agent designed for specific use cases
-- **Scoring Systems**: Standardized metrics for analysis (1-10 sentiment scale)
+- **Multi-Modal Analysis**: Combining structured data (stock prices) with unstructured data (web search)
+- **Natural Language Processing**: Extracting stock symbols and intent from user queries
+- **Source Attribution**: Tracking and reporting information sources
+- **Comprehensive Analysis**: Providing complete responses with multiple data points
 
-## Agent Specifications
+## New Components
 
-### Stock Sentiment Agent Rules
-- Uses stock sentiment scale from 1 to 10 (1=sell, 10=buy)
-- Provides rating, recommendation (buy/hold/sell), and reasoning
-- Includes sources for sentiment analysis
-- Focuses on technical analysis based on stock price data
-- Maintains professional, analytical tone
+### HostedWebSearchTool
+Provides access to current web information for market sentiment, news, and analysis.
 
-### Expected Response Format
-```
-Stock: [SYMBOL]
-Sentiment Score: [1-10]
-Recommendation: [BUY/HOLD/SELL]
-Reasoning: [Technical analysis explanation]
-Source: [Market data, technical indicators, etc.]
-```
+### Enhanced Agent Instructions
+- Analyze various financial topics (stocks, sectors, trends)
+- Extract stock symbols from natural language
+- Use web search for current market sentiment
+- Provide comprehensive single responses
+- Include detailed source attribution
 
 ## Steps to Complete
 
 ### Step 1: Initialize Chat Client
 Same as previous lessons.
 
-### Step 2: Initialize Plugins
-Set up TimeInformationPlugin and StockDataPlugin for real-time data access.
+### Step 2: Initialize Plugins with Web Search
+Add the new HostedWebSearchTool alongside existing plugins:
+- TimeInformationPlugin
+- StockDataPlugin  
+- HostedWebSearchTool (new!)
 
 ### Step 3: Create AI Functions
-Convert plugin methods to AIFunction objects using AIFunctionFactory.Create().
+Convert all plugin methods to AIFunction objects, including the web search tool.
 
-### Step 4: Create Specialized System Instructions
-Write detailed instructions that define:
-- The agent's role as a stock sentiment analyzer
-- Specific rules for analysis and scoring
-- Required response format and structure
-- Professional behavior expectations
+### Step 4: Create Comprehensive Agent Instructions
+Design system instructions that enable the agent to:
+- Analyze stocks, sectors, and general financial topics
+- Extract stock symbols from natural language queries
+- Use web search for current market news and sentiment
+- Apply 1-10 sentiment scoring for stock analysis
+- Provide complete analysis in single responses
+- Include detailed source attribution
 
-### Step 5: Create Stock Sentiment Agent
-Use ChatClientAgent with the specialized instructions and tools.
+### Step 5: Create Financial Analysis Agent
+Use ChatClientAgent with all tools (time, stock data, web search) and comprehensive instructions.
 
 ### Step 6: Create Thread
 Same as previous lessons.
 
-### Step 7: Process User Messages
-Use agent.RunAsync() with proper error handling for robust operation.
+### Step 7: Process Complex Queries
+The agent will automatically orchestrate multiple data sources to provide comprehensive analysis.
 
-## Testing the Agent
+## Testing the Enhanced Agent
 
-### Stock Analysis Queries
-- "MSFT" - Get sentiment analysis for Microsoft
-- "Analyze AAPL" - Apple stock sentiment
-- "What's your sentiment on TSLA?" - Tesla analysis
+### Company Analysis (Natural Language)
+- "What do you think about Microsoft?" (should extract MSFT)
+- "How is Apple performing?" (should extract AAPL)
+- "Tell me about Tesla's prospects" (should extract TSLA)
 
-### Comparison Queries
-- "Compare MSFT and GOOGL sentiment"
-- "Which is better: AAPL or AMZN?"
+### Sector Analysis
+- "How is the tech sector performing?"
+- "Should I invest in renewable energy stocks?"
+- "What's happening in the banking industry?"
 
-### Market Analysis
-- "What stocks should I buy today?"
-- "Give me sentiment analysis for tech stocks"
+### Market Trends
+- "What are the current market trends?"
+- "How is the overall economy doing?"
+- "What are analysts saying about inflation?"
+
+### Investment Strategy
+- "What should I invest in right now?"
+- "Is this a good time to buy stocks?"
+- "How should I diversify my portfolio?"
 
 ## Expected Behavior
-The agent should provide consistent, structured analysis with:
-- Clear numerical sentiment scores (1-10)
-- Specific buy/hold/sell recommendations
-- Technical reasoning based on current market data
-- Professional, analytical responses
-- Source attribution for analysis
+The agent should:
+- Automatically determine when to use web search vs. stock data
+- Extract stock symbols from natural language queries
+- Provide comprehensive analysis combining multiple sources
+- Include a dedicated "Sources" section with specific references
+- Give complete responses without requesting more information
+- Apply appropriate analysis frameworks based on query type
 
-This specialized agent demonstrates how Agent Framework can be used to create professional-grade AI applications with domain-specific expertise and structured outputs.
+This lesson demonstrates how Agent Framework can orchestrate multiple capabilities to create sophisticated, production-ready AI applications.
