@@ -9,9 +9,10 @@
   </ItemGroup>
 
   <ItemGroup>
-    <!-- <PackageReference Include="Microsoft.Agents.AI" /> Temporarily removed due to package conflicts -->
+    <PackageReference Include="Azure.AI.Agents.Persistent" />
     <PackageReference Include="Azure.Identity" />
     <PackageReference Include="Microsoft.Agents.AI" />
+    <PackageReference Include="Microsoft.Agents.AI.AzureAI" />
   </ItemGroup>
 
   <ItemGroup>

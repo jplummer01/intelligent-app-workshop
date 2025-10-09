@@ -4,16 +4,32 @@ using Core.Utilities.Services;
 using Core.Utilities.Extensions;
 using Microsoft.Agents.AI;
 using Microsoft.Extensions.AI;
+using Azure.Identity;
+using Azure.AI.Agents.Persistent;
+using Azure.AI.OpenAI;
 
-// Initialize the chat client with Agent Framework  
-IChatClient chatClient = AgentFrameworkProvider.CreateChatClientWithApiKey();
+// Get AI Foundry settings
+var applicationSettings = AISettingsProvider.GetSettings();
 
-// Initialize plugins
+// Set Azure AI and Authentication environment variables (required for Azure AI Foundry agent)
+Environment.SetEnvironmentVariable("AZURE_FOUNDRY_PROJECT_ENDPOINT", applicationSettings.AIFoundryProject.Endpoint);
+Environment.SetEnvironmentVariable("AZURE_FOUNDRY_PROJECT_DEPLOYMENT_NAME", applicationSettings.AIFoundryProject.DeploymentName);
+
+// Set Bing Grounding Connection ID (Required for web search functionality)  
+Environment.SetEnvironmentVariable("BING_CONNECTION_ID", applicationSettings.AIFoundryProject.GroundingWithBingConnectionId);
+
+// Create PersistentAgentsClient for Azure AI Foundry
+var persistentAgentsClient = new PersistentAgentsClient(
+    applicationSettings.AIFoundryProject.ConnectionString,
+    new DefaultAzureCredential());
+
+// Initialize plugins  
 TimeInformationPlugin timePlugin = new();
 HttpClient httpClient = new();
 StockDataPlugin stockDataPlugin = new(new StocksService(httpClient));
 
-// Create web search tool for enhanced sentiment analysis
+// Create web search tool for Bing grounding (requires BING_CONNECTION_ID environment variable)
+Environment.SetEnvironmentVariable("BING_CONNECTION_ID", applicationSettings.AIFoundryProject.GroundingWithBingConnectionId);
 HostedWebSearchTool webSearchTool = new();
 
 // Create AI Functions from plugins
@@ -45,22 +61,36 @@ string stockSentimentAgentInstructions = """
     - Answer immediately with your full analysis - do not provide status updates or say you're collecting information
     """;
 
-// Create the Financial Analysis Agent using ChatClientAgent
-ChatClientAgent financialAnalysisAgent = new(
-    chatClient,
+// Create Financial Analysis Agent in Azure AI Foundry (following GitHub example pattern)
+// Create agent with Bing grounding tool, then pass local function tools at runtime via ChatClientAgentRunOptions
+var financialAnalysisAgent = await persistentAgentsClient.CreateAIAgentAsync(
+    applicationSettings.AIFoundryProject.DeploymentName,
     instructions: stockSentimentAgentInstructions,
-    name: "FinancialAnalysisAgent",
-    description: "An intelligent agent that provides comprehensive financial analysis using web search and market data",
-    tools: [
-        timeTool,
-        stockPriceTool, 
-        stockPriceDateTool,
-        webSearchTool
+    tools: [ 
+        new BingGroundingToolDefinition(
+            new BingGroundingSearchToolParameters(
+                new[] { 
+                    new BingGroundingSearchConfiguration(
+                        applicationSettings.AIFoundryProject.GroundingWithBingConnectionId
+                    ) 
+                }
+            )
+        ) 
     ]
 );
 
 // Create a thread for conversation
-AgentThread thread = financialAnalysisAgent.GetNewThread();
+var thread = financialAnalysisAgent.GetNewThread();
+
+// Create run options with local function tools (following GitHub example)
+var agentOptions = new ChatClientAgentRunOptions(new() { 
+    Tools = [
+        timeTool,
+        stockPriceTool,
+        stockPriceDateTool,
+        webSearchTool  // This will use the BING_CONNECTION_ID for foundry grounding
+    ] 
+});
 
 // Execute program
 const string terminationPhrase = "quit";
@@ -85,19 +115,9 @@ do
         
         try
         {
-            // Use the agent to process the user message with web search capabilities
-            var response = await financialAnalysisAgent.RunAsync(userInput, thread);
-            
-            // Extract and display the response content
-            if (response?.Messages?.Any() == true)
-            {
-                var lastMessage = response.Messages.Last();
-                Console.WriteLine(lastMessage.Text ?? "No response generated.");
-            }
-            else
-            {
-                Console.WriteLine("No response generated from the agent.");
-            }
+            // Use the agent to process the user message with local tools (following GitHub example)
+            var response = await financialAnalysisAgent.RunAsync(userInput, thread, agentOptions);
+            Console.WriteLine(response);
         }
         catch (Exception ex)
         {
