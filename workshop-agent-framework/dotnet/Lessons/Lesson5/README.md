@@ -1,111 +1,179 @@
-# Lesson 6: Agent Orchestration with Sequential Workflows
+# Lesson 5: Multi-Agent Orchestration with OpenTelemetry
 
 ## Overview
-This lesson introduces agent orchestration using Microsoft Agent Framework workflows. You'll learn to create multiple specialized agents and coordinate them in a sequential workflow to perform complex analysis tasks. This demonstrates how to build sophisticated multi-agent systems for enterprise applications.
+This lesson combines multi-agent orchestration with comprehensive OpenTelemetry tracing. You'll learn to create specialized agents that work together in a sequential workflow while collecting detailed telemetry data for monitoring and observability. This demonstrates how to build production-ready multi-agent systems with enterprise-grade monitoring capabilities.
 
 ## Learning Objectives
-- Understand agent orchestration and workflow concepts
 - Create multiple specialized agents with distinct roles
-- Use AgentWorkflowBuilder for sequential orchestration
-- Handle multi-agent streaming responses
-- Build production-ready multi-agent systems
+- Use Sequential Workflows for agent orchestration
+- Implement OpenTelemetry tracing with Microsoft Agent Framework
+- Configure AI Toolkit for VS Code tracing visualization
+- Handle multi-agent streaming responses with telemetry
+- Build observable multi-agent systems for production
 
 ## Key Concepts
 - **Agent Orchestration**: Coordinating multiple agents to work together
 - **Sequential Workflows**: Agents process information in a specific order
+- **OpenTelemetry Integration**: Built-in telemetry for AI agent applications
 - **Specialized Agents**: Each agent has a focused, specific responsibility
 - **Workflow-as-Agent**: Converting workflows into single callable agents
-- **Multi-Agent Streaming**: Managing real-time responses from multiple agents
+- **AI Toolkit Tracing**: VS Code extension for trace visualization
+
+## Prerequisites
+- Completed Lesson 4 (Basic Agent Framework Usage)
+- Understanding of observability concepts (traces, metrics, logs)
+- Visual Studio Code with AI Toolkit extension installed
+
+## Setup Instructions
+
+### 1. Install AI Toolkit for VS Code
+1. Open Visual Studio Code
+2. Go to Extensions (Ctrl+Shift+X)
+3. Search for "AI Toolkit"
+4. Install the **AI Toolkit** extension by Microsoft
+5. Restart VS Code if needed
+
+### 2. Configure AI Toolkit Tracing
+1. Open the **AI Toolkit** panel in VS Code
+2. Navigate to the **Tracing** section
+3. Click **Start Collector** to start the local OTLP trace collector
+4. The collector will start listening on `http://localhost:4317` (gRPC) and `http://localhost:4318` (HTTP)
 
 ## Architecture
 
-### Three-Agent Portfolio Analysis System
+### Three-Agent Portfolio Analysis System with OpenTelemetry
 
-1. **Portfolio Research Agent**
+1. **Portfolio Research Agent** (with OpenTelemetry instrumentation)
    - Gathers market data for all stocks
    - Retrieves current prices and web sentiment
    - Provides comprehensive research reports
+   - Traces all data collection operations
 
-2. **Risk Assessment Agent**
+2. **Risk Assessment Agent** (with OpenTelemetry instrumentation)
    - Analyzes portfolio composition
    - Calculates risk scores and diversification metrics
    - Identifies concentration concerns
+   - Traces risk calculation processes
 
-3. **Investment Advisor Agent**
+3. **Investment Advisor Agent** (with OpenTelemetry instrumentation)
    - Synthesizes research and risk analysis
    - Provides actionable recommendations
    - Suggests specific buy/hold/sell actions
+   - Traces recommendation generation
 
 ## Steps to Complete
 
-### Step 1: Initialize Chat Client
-Same as previous lessons.
-
-### Step 2: Initialize Plugins
-Set up TimeInformationPlugin, StockDataPlugin, and HostedWebSearchTool.
-
-### Step 3: Create AI Functions
-Convert plugin methods to AIFunction objects.
-
-### Step 4: Create Portfolio Research Agent
-Design instructions for comprehensive market data gathering:
-- Stock price collection
-- Web sentiment analysis
-- Structured research reporting
-
-### Step 5: Create Risk Assessment Agent
-Design instructions for portfolio risk analysis:
-- Sector concentration analysis
-- Risk scoring (1-10 scale)
-- Diversification assessment
-
-### Step 6: Create Investment Advisor Agent
-Design instructions for recommendation synthesis:
-- Portfolio health scoring
-- Buy/hold/sell recommendations
-- Rebalancing suggestions
-
-### Step 7: Build Sequential Workflow
-Use `AgentWorkflowBuilder.BuildSequential()` to create an orchestrated workflow and convert it to a single callable agent.
-
-### Step 8: Stream Multi-Agent Responses
-Implement streaming that shows which agent is responding and displays their output in real-time.
-
-## Workflow Pattern
-
+### Step 1: Configure OpenTelemetry TracerProvider
+Set up OpenTelemetry with console and OTLP exporters:
 ```csharp
-// Create sequential workflow
-AIAgent workflowAgent = await AgentWorkflowBuilder.BuildSequential([
-    researchAgent,
-    riskAgent, 
-    advisorAgent
-]).AsAgentAsync();
-
-// Stream responses with agent identification
-await foreach (var update in workflowAgent.RunStreamingAsync(input))
-{
-    // Track which agent is responding
-    // Display formatted output
-}
+using var tracerProvider = Sdk.CreateTracerProviderBuilder()
+    .AddSource("agent-telemetry-source")
+    .AddConsoleExporter()
+    .AddOtlpExporter(options =>
+    {
+        options.Endpoint = new Uri("http://localhost:4317");
+        options.Protocol = OtlpExportProtocol.Grpc;
+    })
+    .Build();
 ```
 
-## Testing the Multi-Agent System
+### Step 2: Initialize Chat Client with OpenTelemetry
+Create the chat client and instrument it for telemetry.
+
+### Step 3: Initialize Plugins
+Set up TimeInformationPlugin, StockDataPlugin, and HostedWebSearchTool.
+
+### Step 4: Create AI Functions
+Convert plugin methods to AIFunction objects.
+
+### Step 5: Create Portfolio Research Agent with OpenTelemetry
+Design instructions for comprehensive market data gathering with telemetry:
+- Stock price collection (instrumented)
+- Web sentiment analysis (traced)
+- Structured research reporting
+- Use `.AsBuilder().UseOpenTelemetry().Build()` for instrumentation
+
+### Step 6: Create Risk Assessment Agent with OpenTelemetry
+Design instructions for portfolio risk analysis with telemetry:
+- Sector concentration analysis (traced)
+- Risk scoring (1-10 scale) with performance metrics
+- Diversification assessment
+- Use `.AsBuilder().UseOpenTelemetry().Build()` for instrumentation
+
+### Step 7: Create Investment Advisor Agent with OpenTelemetry
+Design instructions for recommendation synthesis with telemetry:
+- Portfolio health scoring (traced)
+- Buy/hold/sell recommendations with timing
+- Rebalancing suggestions
+- Use `.AsBuilder().UseOpenTelemetry().Build()` for instrumentation
+
+### Step 8: Build Sequential Workflow with Telemetry
+Use `SequentialAgentWorkflow.Create()` to create an orchestrated workflow with full tracing.
+
+### Step 9: Execute Workflow with Performance Monitoring
+Implement execution with stopwatch timing and comprehensive telemetry output.
+
+## Workflow Pattern with OpenTelemetry
+
+```csharp
+// Configure OpenTelemetry TracerProvider
+using var tracerProvider = Sdk.CreateTracerProviderBuilder()
+    .AddSource("agent-telemetry-source")
+    .AddConsoleExporter()
+    .AddOtlpExporter(options =>
+    {
+        options.Endpoint = new Uri("http://localhost:4317");
+        options.Protocol = OtlpExportProtocol.Grpc;
+    })
+    .Build();
+
+// Create instrumented agents
+var researchAgent = chatClient.AsBuilder().UseOpenTelemetry().Build();
+var riskAgent = chatClient.AsBuilder().UseOpenTelemetry().Build();
+var advisorAgent = chatClient.AsBuilder().UseOpenTelemetry().Build();
+
+// Create sequential workflow
+var workflow = SequentialAgentWorkflow.Create(researchAgent, riskAgent, advisorAgent);
+
+// Execute with timing
+var stopwatch = Stopwatch.StartNew();
+var response = await workflow.InvokeAsync(prompt);
+stopwatch.Stop();
+```
+
+## Testing the Multi-Agent System with OpenTelemetry
 
 ### Portfolio Examples
 - "MSFT, AAPL, TSLA, NVDA" (tech-heavy portfolio)
 - "MSFT, JPM, PG, XOM, VZ" (diversified portfolio)
 - "TSLA, RIVN, NIO, LCID" (EV-focused portfolio)
 
-### Expected Flow
-1. **Research Agent**: Gathers data on each stock
-2. **Risk Agent**: Analyzes the portfolio composition
-3. **Advisor Agent**: Provides final recommendations
+### Expected Flow with Telemetry
+1. **Research Agent**: Gathers data on each stock (traced operations)
+2. **Risk Agent**: Analyzes the portfolio composition (performance metrics)
+3. **Advisor Agent**: Provides final recommendations (timing data)
+
+### Viewing Telemetry Data
+- **Console Output**: See traces directly in terminal
+- **AI Toolkit**: Open tracing view in VS Code
+- **Performance Metrics**: Execution timing displayed
+- **OTLP Export**: Data sent to localhost:4317 for external tools
 
 ## Advanced Features
-- **Agent Identification**: Track which agent is responding
+- **OpenTelemetry Integration**: Full distributed tracing across agents
+- **AI Toolkit Visualization**: Built-in VS Code trace viewing
+- **Performance Monitoring**: Real-time execution timing
+- **Agent Identification**: Track which agent is responding in traces
 - **Formatted Output**: Professional presentation of results
-- **Error Handling**: Robust operation across multiple agents
-- **Streaming Coordination**: Real-time multi-agent responses
+- **Error Handling**: Robust operation across multiple agents with error tracing
+- **OTLP Export**: Compatible with external observability tools
 
 ## Expected Behavior
-You should see a clear progression through three distinct analysis phases, with each agent building upon the previous agent's work to provide comprehensive portfolio analysis. The system demonstrates how complex tasks can be broken down into specialized components that work together seamlessly.
+You should see a clear progression through three distinct analysis phases, with each agent building upon the previous agent's work to provide comprehensive portfolio analysis. Additionally, you'll observe detailed telemetry data showing:
+- Agent execution timing
+- Request/response traces
+- Performance metrics
+- Error tracking (if any)
+- Complete workflow orchestration visibility
+
+The system demonstrates how complex tasks can be broken down into specialized components that work together seamlessly while maintaining full observability for production monitoring.

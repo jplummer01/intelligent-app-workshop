@@ -1,6 +1,23 @@
-# Lesson 5: Sequential Workflows with Multiple Agents
+# Lesson 5: Multi-Agent Orchestration with OpenTelemetry
 
-This lesson demonstrates sequential orchestration where multiple specialized agents work together in a defined sequence to analyze a complete investment portfolio.
+This lesson demonstrates sequential orchestration where multiple specialized agents work together in a defined sequence to analyze a complete investment portfolio, while implementing comprehensive OpenTelemetry tracing for observability.
+
+## Prerequisites
+
+1. **Install AI Toolkit for VS Code**:
+   - Open Visual Studio Code
+   - Go to Extensions (Ctrl+Shift+X)
+   - Search for "AI Toolkit"
+   - Install the **AI Toolkit** extension by Microsoft
+   - Restart VS Code if needed
+
+2. **Configure AI Toolkit Tracing**:
+   - Open the **AI Toolkit** panel in VS Code
+   - Navigate to the **Tracing** section
+   - Click **Start Collector** to start the local OTLP trace collector
+   - The collector will start listening on `http://localhost:4317` (gRPC) and `http://localhost:4318` (HTTP)
+
+## Getting Started
 
 1. Switch to Lesson 5 directory:
 
@@ -8,158 +25,195 @@ This lesson demonstrates sequential orchestration where multiple specialized age
     cd workshop-agent-framework/dotnet/Lessons/Lesson5
     ```
 
-1. Run the application to see it works:
+2. Run the application to see the current basic implementation:
 
     ```bash
     dotnet run
     ```
 
-1. Open `Program.cs` and replace the single agent approach with a sequential workflow of three specialized agents:
+    Try entering some stock symbols like "MSFT, AAPL" to see the manual sequential execution.
 
-    1. **TODO: Step 1** - Add the workflows namespace:
+## Implementation Steps
 
-        ```csharp
-        using Microsoft.Agents.AI.Workflows;
-        ```
+Open `Program.cs` and enhance it with OpenTelemetry observability and proper workflow orchestration:
 
-    1. **TODO: Step 2** - Replace the single financial agent with the Portfolio Research Agent. Remove the entire section from `// Financial Analysis Agent system instructions...` through the `financialAnalysisAgent` creation, and replace with:
+### Step 1: Add OpenTelemetry Imports
 
-        ```csharp
-        // Portfolio Research Agent - Gathers data on all stocks
-        string researchAgentInstructions = """
-            You are a Portfolio Research Agent. Your job is to gather comprehensive market data for stocks.
-            
-            For each stock symbol provided:
-            - Get the current stock price
-            - Search the web for recent news and market sentiment
-            - Provide a brief summary of each stock's current situation
-            
-            Provide your complete research in a SINGLE response with clear sections for each stock.
-            Format your response as a research report with stock symbols as headers.
-            """;
+Add the OpenTelemetry imports at the top of the file:
 
-        ChatClientAgent researchAgent = new(
-            chatClient,
-            instructions: researchAgentInstructions,
-            name: "PortfolioResearchAgent",
-            description: "Gathers market data and news for portfolio stocks",
-            tools: [stockPriceTool, webSearchTool, timeTool]
-        );
-        ```
+```csharp
+using Microsoft.Agents.AI.Workflows;
+using OpenTelemetry;
+using OpenTelemetry.Trace;
+```
 
-    1. **TODO: Step 3** - Create the Risk Assessment Agent:
+### Step 2: Configure OpenTelemetry TracerProvider
 
-        ```csharp
-        string riskAgentInstructions = """
-            You are a Risk Assessment Agent. Analyze the portfolio composition and risk profile.
-            
-            Based on the research provided:
-            - Identify sector concentration (tech-heavy, diversified, etc.)
-            - Assess portfolio balance and diversification
-            - Calculate a risk score from 1-10 (1=very safe, 10=very risky)
-            - Highlight any concerns about over-concentration
-            
-            Provide your complete analysis in a SINGLE response.
-            Be concise and actionable.
-            """;
+Replace the comment about TracerProvider with the actual implementation:
 
-        ChatClientAgent riskAgent = new(
-            chatClient,
-            instructions: riskAgentInstructions,
-            name: "RiskAssessmentAgent",
-            description: "Analyzes portfolio risk and diversification"
-        );
-        ```
+```csharp
+// Create TracerProvider that exports to console and OTLP
+// Following Python Agent Framework pattern: uses gRPC on port 4317
+using var tracerProvider = Sdk.CreateTracerProviderBuilder()
+    .AddSource("agent-telemetry-source")
+    .AddConsoleExporter()
+    .AddOtlpExporter(options =>
+    {
+        // Primary: gRPC on 4317 (matches Python Agent Framework and AI Toolkit)
+        options.Endpoint = new Uri("http://localhost:4317");
+        options.Protocol = OpenTelemetry.Exporter.OtlpExportProtocol.Grpc;
+    })
+    .Build();
+```
 
-    1. **TODO: Step 4** - Create the Investment Advisor Agent:
+### Step 3: Add OpenTelemetry Instrumentation to Agents
 
-        ```csharp
-        string advisorAgentInstructions = """
-            You are an Investment Advisor Agent. Synthesize research and risk analysis into actionable recommendations.
-            
-            Based on the research and risk assessment:
-            - Provide an overall portfolio health score (1-10)
-            - Give specific buy/hold/sell recommendations for each stock
-            - Suggest rebalancing actions if needed
-            - Provide 2-3 key takeaways
-            
-            Provide your complete recommendations in a SINGLE response.
-            Be clear, concise, and actionable.
-            """;
+Replace each agent creation with OpenTelemetry-instrumented versions:
 
-        ChatClientAgent advisorAgent = new(
-            chatClient,
-            instructions: advisorAgentInstructions,
-            name: "InvestmentAdvisorAgent",
-            description: "Provides investment recommendations based on research and risk analysis"
-        );
-        ```
+```csharp
+// Portfolio Research Agent with OpenTelemetry
+ChatClientAgent portfolioResearchAgent = chatClient
+    .AsBuilder()
+    .UseOpenTelemetry()
+    .Build();
 
-    1. **TODO: Step 4** - Build the sequential workflow:
+portfolioResearchAgent = new ChatClientAgent(
+    portfolioResearchAgent,
+    instructions: researchAgentInstructions,
+    name: "PortfolioResearchAgent",
+    description: "Gathers market data and news for portfolio stocks",
+    tools: [stockPriceTool, webSearchTool, timeTool]
+);
 
-        ```csharp
-        // Build the workflow and convert it to an agent
-        AIAgent workflowAgent = await AgentWorkflowBuilder.BuildSequential([
-            researchAgent,
-            riskAgent,
-            advisorAgent
-        ]).AsAgentAsync();
-        ```
+// Risk Assessment Agent with OpenTelemetry
+ChatClientAgent riskAssessmentAgent = chatClient
+    .AsBuilder()
+    .UseOpenTelemetry()
+    .Build();
 
-    1. **TODO: Step 5** - Replace the conversation loop (from `// Create a thread for conversation` onwards) with a direct portfolio analysis test:
+riskAssessmentAgent = new ChatClientAgent(
+    riskAssessmentAgent,
+    instructions: riskAgentInstructions,
+    name: "RiskAssessmentAgent",
+    description: "Analyzes portfolio risk and diversification"
+);
 
-        ```csharp
-        // Test the portfolio analysis workflow
-        string portfolioQuery = "Analyze this portfolio: MSFT, AAPL, GOOGL, TSLA, NVDA. " +
-                               "Get current prices, assess risks, and provide recommendations.";
+// Investment Advisor Agent with OpenTelemetry
+ChatClientAgent investmentAdvisorAgent = chatClient
+    .AsBuilder()
+    .UseOpenTelemetry()
+    .Build();
 
-        Console.WriteLine("🔍 Starting Portfolio Analysis...\n");
+investmentAdvisorAgent = new ChatClientAgent(
+    investmentAdvisorAgent,
+    instructions: advisorAgentInstructions,
+    name: "InvestmentAdvisorAgent",
+    description: "Provides investment recommendations based on research and risk analysis"
+);
+```
 
-        try
-        {
-            string? lastAgentName = null;
-            await foreach (var update in workflowAgent.RunStreamingAsync(portfolioQuery))
-            {
-                // Print header when we see a new agent starting
-                if (lastAgentName != update.AuthorName)
-                {
-                    if (lastAgentName != null)
-                    {
-                        Console.WriteLine(); // Add spacing between agents
-                        Console.WriteLine(new string('-', 70));
-                        Console.WriteLine();
-                    }
-                    
-                    lastAgentName = update.AuthorName;
-                    Console.WriteLine($"[{update.AuthorName}]");
-                    Console.WriteLine(new string('-', 70));
-                }
-                
-                // Stream the text output in real-time
-                Console.Write(update.Text);
-            }
-            
-            Console.WriteLine("\n" + new string('=', 70));
-            Console.WriteLine("✓ ANALYSIS COMPLETE");
-            Console.WriteLine(new string('=', 70));
-        }
-        catch (Exception ex)
-        {
-            Console.WriteLine($"❌ Error in portfolio analysis: {ex.Message}");
-        }
-        ```
+### Step 4: Create Sequential Workflow
 
-1. Test the sequential workflow with portfolio analysis:
+Replace the manual agent calls in the main loop with a proper sequential workflow:
+
+```csharp
+// TODO 6: Create Sequential Workflow with all three agents
+// Replace this comment with:
+var workflow = SequentialAgentWorkflow.Create(
+    portfolioResearchAgent,
+    riskAssessmentAgent,
+    investmentAdvisorAgent
+);
+```
+
+### Step 5: Add Performance Monitoring
+
+Replace the manual execution with workflow execution and performance tracking:
+
+```csharp
+// TODO 7: Add performance monitoring with Stopwatch
+// Replace the manual agent calls with:
+var stopwatch = System.Diagnostics.Stopwatch.StartNew();
+
+var prompt = $"Analyze portfolio for stocks: {string.Join(", ", symbols)}. Provide comprehensive research, risk assessment, and investment recommendations.";
+
+var response = await workflow.InvokeAsync(prompt);
+
+stopwatch.Stop();
+
+Console.WriteLine($"\n✅ Analysis completed in {stopwatch.ElapsedMilliseconds}ms");
+Console.WriteLine($"📊 Final Investment Analysis:\n{response}");
+Console.WriteLine();
+Console.WriteLine("🔍 Check console output above for OpenTelemetry traces");
+Console.WriteLine("💡 Open AI Toolkit in VS Code to visualize traces");
+```
+
+### Step 6: Update Console Output
+
+Add enhanced telemetry information to the console output:
+
+```csharp
+Console.WriteLine("=== Investment Portfolio Analyzer with Sequential Orchestration & OpenTelemetry ===");
+Console.WriteLine("This demonstrates MAF Sequential Orchestration with comprehensive telemetry:");
+Console.WriteLine("  • Three specialized agents with distributed tracing");
+Console.WriteLine("  • OpenTelemetry traces with console and OTLP export");
+Console.WriteLine("  • Microsoft Agent Framework instrumentation");
+Console.WriteLine("  • AI Toolkit for VS Code integration");
+Console.WriteLine();
+Console.WriteLine("🔍 OpenTelemetry TracerProvider configured with:");
+Console.WriteLine("   • Console Exporter: ✅ Enabled");
+Console.WriteLine("   • OTLP Exporter: ✅ http://localhost:4317 (gRPC)");
+Console.WriteLine("   • Protocol: gRPC (matching Python Agent Framework)");
+Console.WriteLine("   • AI Toolkit: Use tracing view in VS Code");
+```
+
+## Testing with OpenTelemetry
+
+1. **Ensure AI Toolkit is running**:
+   - Check that the OTLP collector is started in VS Code AI Toolkit
+   - Verify it's listening on localhost:4317
+
+2. **Run the enhanced application**:
 
     ```bash
     dotnet run
     ```
 
-    Expected behavior:
-    1. **Portfolio Research Agent** gathers current prices and market news for each stock (MSFT, AAPL, GOOGL, TSLA, NVDA)
-    2. **Risk Assessment Agent** analyzes portfolio balance, diversification, and assigns a risk score
-    3. **Investment Advisor Agent** provides buy/hold/sell recommendations and rebalancing suggestions
+3. **Test with portfolio analysis**:
+   - Enter stock symbols: `MSFT, AAPL, NVDA`
+   - Observe comprehensive telemetry output in console
+   - Watch for OpenTelemetry activity traces with timing information
 
-    The output will show clear sections for each agent with streaming text as they work sequentially.
+4. **View traces in AI Toolkit**:
+   - In VS Code, open AI Toolkit panel
+   - Navigate to Tracing section
+   - Click "Refresh" to see new traces
+   - Select a trace to explore the span tree
+   - Review Input + Output tab for AI message flows
+   - Check Metadata tab for detailed trace information
 
-This lesson demonstrates how the Agent Framework enables sophisticated multi-agent workflows where each agent specializes in a specific task, and their outputs flow sequentially to create comprehensive analysis.
+## Expected Behavior with OpenTelemetry
+
+You should observe:
+
+1. **Sequential Agent Execution**:
+   - Portfolio Research Agent gathers market data and news
+   - Risk Assessment Agent analyzes portfolio composition and risk
+   - Investment Advisor Agent provides recommendations
+
+2. **Comprehensive Telemetry Data**:
+   - Console output shows OpenTelemetry activities with IDs and timing
+   - Each agent's execution is traced with performance metrics
+   - Complete workflow orchestration visibility
+
+3. **AI Toolkit Integration**:
+   - Traces appear in VS Code AI Toolkit tracing view
+   - Span hierarchy shows workflow → individual agents
+   - Detailed metadata about model calls, token usage, and response IDs
+
+4. **Performance Monitoring**:
+   - Total execution time displayed
+   - Individual agent timing visible in traces
+   - Memory and resource usage tracking
+
+This enhanced lesson demonstrates how to build production-ready multi-agent systems with enterprise-grade observability using OpenTelemetry and the AI Toolkit for VS Code.

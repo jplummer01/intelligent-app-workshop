@@ -5,7 +5,46 @@ using Core.Utilities.Extensions;
 using Microsoft.Agents.AI;
 using Microsoft.Agents.AI.Workflows;
 using Microsoft.Extensions.AI;
+using OpenTelemetry;
+using OpenTelemetry.Trace;
 using System.Text;
+
+// Create TracerProvider that exports to console and OTLP
+// Following Python Agent Framework pattern: uses gRPC on port 4317
+using var tracerProvider = Sdk.CreateTracerProviderBuilder()
+    .AddSource("agent-telemetry-source")
+    .AddConsoleExporter()
+    .AddOtlpExporter(options =>
+    {
+        // Primary: gRPC on 4317 (matches Python Agent Framework)
+        options.Endpoint = new Uri("http://localhost:4317");
+        options.Protocol = OpenTelemetry.Exporter.OtlpExportProtocol.Grpc;
+    })
+    .Build();
+
+Console.WriteLine("=== Investment Portfolio Analyzer with Sequential Orchestration & OpenTelemetry ===");
+Console.WriteLine("This demonstrates MAF Sequential Orchestration with comprehensive telemetry:");
+Console.WriteLine("  • Three specialized agents with distributed tracing");
+Console.WriteLine("  • OpenTelemetry traces with console and OTLP export");
+Console.WriteLine("  • Microsoft Agent Framework instrumentation");
+Console.WriteLine("  • AI Toolkit for VS Code integration");
+Console.WriteLine();
+Console.WriteLine("🔍 OpenTelemetry TracerProvider configured with:");
+Console.WriteLine("   • Console Exporter: ✅ Enabled");
+Console.WriteLine("   • OTLP Exporter: ✅ http://localhost:4317 (gRPC)");
+Console.WriteLine("   • Protocol: gRPC (matching Python Agent Framework)");
+Console.WriteLine("   • AI Toolkit: Use tracing view in VS Code");
+Console.WriteLine();
+Console.WriteLine("To view telemetry data:");
+Console.WriteLine("  1. Traces are automatically shown in console output");
+Console.WriteLine("  2. OTLP data exported to localhost:4317 (gRPC)");
+Console.WriteLine("  3. Open AI Toolkit in VS Code for trace visualization");
+Console.WriteLine("  4. Or run an OTEL collector for advanced visualization");
+Console.WriteLine();
+Console.WriteLine("Enter stock symbols separated by commas (e.g., 'MSFT, AAPL, TSLA, NVDA')");
+Console.WriteLine("Type 'quit' to exit.");
+Console.WriteLine("====================================================================");
+Console.WriteLine();
 
 // Initialize the chat client with Agent Framework  
 IChatClient chatClient = AgentFrameworkProvider.CreateChatClientWithApiKey();
@@ -34,13 +73,16 @@ string researchAgentInstructions = """
     Format your response as a research report with stock symbols as headers.
     """;
 
-ChatClientAgent researchAgent = new(
+AIAgent researchAgent = new ChatClientAgent(
     chatClient,
     instructions: researchAgentInstructions,
     name: "PortfolioResearchAgent",
     description: "Gathers market data and news for portfolio stocks",
     tools: [stockPriceTool, webSearchTool, timeTool]
-);
+)
+.AsBuilder()
+.UseOpenTelemetry(sourceName: "agent-telemetry-source")
+.Build();
 
 // Agent 2: Risk Assessment Agent - Analyzes portfolio risk
 string riskAgentInstructions = """
@@ -56,12 +98,15 @@ string riskAgentInstructions = """
     Be concise and actionable.
     """;
 
-ChatClientAgent riskAgent = new(
+AIAgent riskAgent = new ChatClientAgent(
     chatClient,
     instructions: riskAgentInstructions,
     name: "RiskAssessmentAgent",
     description: "Analyzes portfolio risk and diversification"
-);
+)
+.AsBuilder()
+.UseOpenTelemetry(sourceName: "agent-telemetry-source")
+.Build();
 
 // Agent 3: Investment Advisor Agent - Provides recommendations
 string advisorAgentInstructions = """
@@ -77,25 +122,17 @@ string advisorAgentInstructions = """
     Be clear, concise, and actionable.
     """;
 
-ChatClientAgent advisorAgent = new(
+AIAgent advisorAgent = new ChatClientAgent(
     chatClient,
     instructions: advisorAgentInstructions,
     name: "InvestmentAdvisorAgent",
     description: "Provides investment recommendations based on research and risk analysis"
-);
+)
+.AsBuilder()
+.UseOpenTelemetry(sourceName: "agent-telemetry-source")
+.Build();
 
 // Execute program
-Console.WriteLine("=== Investment Portfolio Analyzer with Sequential Orchestration ===");
-Console.WriteLine("This demonstrates MAF Sequential Orchestration with three specialized agents:");
-Console.WriteLine("  1. Portfolio Research Agent (gathers data)");
-Console.WriteLine("  2. Risk Assessment Agent (analyzes risk)");
-Console.WriteLine("  3. Investment Advisor Agent (provides recommendations)");
-Console.WriteLine();
-Console.WriteLine("Enter stock symbols separated by commas (e.g., 'MSFT, AAPL, TSLA, NVDA')");
-Console.WriteLine("Type 'quit' to exit.");
-Console.WriteLine("====================================================================");
-Console.WriteLine();
-
 const string terminationPhrase = "quit";
 string? userInput;
 
@@ -109,18 +146,23 @@ do
         try
         {
             Console.WriteLine("\n" + new string('=', 70));
-            Console.WriteLine("PORTFOLIO ANALYSIS - SEQUENTIAL ORCHESTRATION");
+            Console.WriteLine("PORTFOLIO ANALYSIS - SEQUENTIAL ORCHESTRATION WITH TELEMETRY");
             Console.WriteLine(new string('=', 70) + "\n");
             
-            // Build the workflow and convert it to an agent
-            AIAgent workflowAgent = await AgentWorkflowBuilder.BuildSequential([
+            // Build the workflow and convert it to an agent with telemetry
+            AIAgent workflowAgent = (await AgentWorkflowBuilder.BuildSequential([
                 researchAgent,
                 riskAgent,
                 advisorAgent
-            ]).AsAgentAsync();
+            ]).AsAgentAsync())
+            .AsBuilder()
+            .UseOpenTelemetry(sourceName: "agent-telemetry-source")
+            .Build();
             
             // Run the workflow with streaming output
             string? lastAgentName = null;
+            var stopwatch = System.Diagnostics.Stopwatch.StartNew();
+            
             await foreach (var update in workflowAgent.RunStreamingAsync($"Analyze this portfolio of stocks: {userInput}"))
             {
                 // Print header when we see a new agent starting
@@ -142,8 +184,11 @@ do
                 Console.Write(update.Text);
             }
             
+            stopwatch.Stop();
+            
             Console.WriteLine("\n" + new string('=', 70));
-            Console.WriteLine("✓ ANALYSIS COMPLETE");
+            Console.WriteLine($"✓ ANALYSIS COMPLETE - Duration: {stopwatch.ElapsedMilliseconds}ms");
+            Console.WriteLine("✓ OpenTelemetry traces exported to console and OTLP endpoint");
             Console.WriteLine(new string('=', 70));
         }
         catch (Exception ex)
@@ -161,3 +206,4 @@ do
 while (userInput != terminationPhrase);
 
 Console.WriteLine("Thank you for using the Portfolio Analyzer!");
+Console.WriteLine("OpenTelemetry traces have been exported. Check AI Toolkit in VS Code or your observability platform for detailed insights.");
