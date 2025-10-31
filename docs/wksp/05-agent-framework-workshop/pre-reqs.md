@@ -115,7 +115,7 @@ cd intelligent-app-workshop
     1. Copy the api key and store as the **apiKey** value in `appsettings.json`.
             ![OpenAI Deployment settings](./images/open-ai-connection.jpg)
 
-1. We need to obtain an API Key to be able to get stock prices from [polygon.io](https://polygon.io/dashboard/login). You can sign up for a free API Key by creating a login. This value will be needed for [Lesson 3](lesson3.md).
-    1. Once logged in, from the [polygon.io Dashboard](https://polygon.io/dashboard) locate the **Keys** section. Copy the default key value and paste it as the **apiKey** value within the `StockService` element in the `appsettings.json` file.
+1. We need to obtain an API Key to be able to get stock prices from [Massive](https://massive.com/dashboard/login). You can sign up for a free API Key by creating a login. This value will be needed for [Lesson 3](lesson3.md).
+    1. Once logged in, from the [Massive Dashboard](https://massive.com/dashboard) locate the **Keys** section. Copy the default key value and paste it as the **apiKey** value within the `StockService` element in the `appsettings.json` file.
 
 By ensuring you have completed these prerequisites, you'll be well-prepared to dive into the Intelligent App Development Workshop and make the most of the hands-on learning experience.
