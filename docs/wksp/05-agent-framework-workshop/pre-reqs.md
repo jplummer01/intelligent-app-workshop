@@ -91,7 +91,14 @@ cd intelligent-app-workshop
         ![Groundingconnection](./images/bing-grounding-connection.jpg)
     1. Find the resource you created and click **Add connection**.
     1. Click **Close**.
-    1. On the Connections page, copy the name of the connection you just created and paste it as the **groundingWithBingConnectionId** value within the `AIFoundryProject` element in the `appSettings.json` file.
+    1. On the Connections page, click on the Bing connection you just created to view its details.
+    1. Copy the **full Connection ID** (not just the name). The Connection ID should look like:
+        ```
+        /subscriptions/{subscription-id}/resourceGroups/{resource-group}/providers/Microsoft.CognitiveServices/accounts/{ai-foundry-account}/projects/{project-name}/connections/{connection-name}
+        ```
+    1. Paste this full Connection ID as the **groundingWithBingConnectionId** value within the `AIFoundryProject` element in the `appSettings.json` file.
+    
+    > **Important**: You must use the complete Azure AI Foundry connection path, not just the connection name. The Connection ID includes the subscription ID, resource group, AI Foundry account, project name, and connection name.
 
 1. Upgrade OpenAI Connection
 
