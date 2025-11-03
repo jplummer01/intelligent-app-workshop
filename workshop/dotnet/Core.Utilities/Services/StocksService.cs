@@ -19,7 +19,7 @@ namespace Core.Utilities.Services
 
         public StocksService(HttpClient httpClient)
         {
-            httpClient.BaseAddress = new Uri("https://api.polygon.io/v1/");
+            httpClient.BaseAddress = new Uri("https://api.massive.com/v3/");
             _httpClient = httpClient;
             _apiKey = AISettingsProvider.GetSettings().StockService.ApiKey;
         }

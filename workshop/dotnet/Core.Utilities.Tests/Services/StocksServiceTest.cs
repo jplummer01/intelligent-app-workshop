@@ -22,7 +22,7 @@ namespace Core.Utilities.Services.Tests
             _httpMessageHandlerMock = new Mock<HttpMessageHandler>();
             _httpClient = new HttpClient(_httpMessageHandlerMock.Object)
             {
-                BaseAddress = new Uri("https://api.polygon.io/v1/")
+                BaseAddress = new Uri("https://api.massive.com/v3/")
             };
             _stocksService = new StocksService(_httpClient);
         }
