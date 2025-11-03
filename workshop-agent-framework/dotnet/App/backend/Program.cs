@@ -20,18 +20,6 @@ builder.Services.AddAntiforgery(options => {
 builder.Services.AddHttpClient();
 builder.Services.AddDistributedMemoryCache();
 
-// Add CORS policy
-builder.Services.AddCors(options =>
-{
-    options.AddDefaultPolicy(policy =>
-    {
-        policy.WithOrigins("http://localhost:80", "http://localhost", "http://localhost:3000")
-              .AllowAnyMethod()
-              .AllowAnyHeader()
-              .AllowCredentials();
-    });
-});
-
 // Add MAF services
 builder.Services.AddMafServices();
 
@@ -39,11 +27,11 @@ builder.Services.AddMafServices();
 builder.Configuration.AddUserSecrets<Program>();
 
 var app = builder.Build();
+app.UseCors();
 app.UseSwagger();
 app.UseSwaggerUI();
 app.UseOutputCache();
 app.UseRouting();
-app.UseCors();
 app.UseAntiforgery();
 app.MapControllers();
 

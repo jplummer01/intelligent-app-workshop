@@ -9,6 +9,7 @@ using Microsoft.AspNetCore.Mvc;
 using Azure.Identity;
 using Azure.AI.Agents.Persistent;
 using Azure.AI.OpenAI;
+using Azure;
 
 namespace Controllers;
 
@@ -19,20 +20,23 @@ public class ChatController : ControllerBase
     private readonly AIAgent _financialAnalysisAgent;
     private readonly AgentThread _thread;
     private readonly ChatClientAgentRunOptions _agentOptions;
+    private readonly string _managedIdentityClientId;
     
     public ChatController()
     {
         var applicationSettings = AISettingsProvider.GetSettings();
+        
+        _managedIdentityClientId = applicationSettings.ManagedIdentity?.ClientId;
         
         // Set Azure AI and Authentication environment variables (required for Azure AI Foundry agent)
         Environment.SetEnvironmentVariable("AZURE_FOUNDRY_PROJECT_ENDPOINT", applicationSettings.AIFoundryProject.Endpoint);
         Environment.SetEnvironmentVariable("AZURE_FOUNDRY_PROJECT_DEPLOYMENT_NAME", applicationSettings.AIFoundryProject.DeploymentName);
         Environment.SetEnvironmentVariable("BING_CONNECTION_ID", applicationSettings.AIFoundryProject.GroundingWithBingConnectionId);
 
-        // Create PersistentAgentsClient for Azure AI Foundry
+        // Create PersistentAgentsClient for Azure AI Foundry with managed identity support
         var persistentAgentsClient = new PersistentAgentsClient(
             applicationSettings.AIFoundryProject.ConnectionString,
-            new DefaultAzureCredential());
+            GetDefaultAzureCredential());
 
         // Initialize plugins  
         TimeInformationPlugin timePlugin = new();
@@ -99,6 +103,19 @@ public class ChatController : ControllerBase
                 webSearchTool
             ] 
         });
+    }
+
+    private DefaultAzureCredential GetDefaultAzureCredential()
+    {
+        // Conditionally set the Azure credentials because a managed identity client is
+        // required if you're running in ACA but not locally
+        var credential = string.IsNullOrEmpty(_managedIdentityClientId) ? 
+            new DefaultAzureCredential() 
+            : new DefaultAzureCredential(new DefaultAzureCredentialOptions
+                {
+                    ManagedIdentityClientId = _managedIdentityClientId
+                });
+        return credential;
     }
 
     [HttpPost("/chat")]
