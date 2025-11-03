@@ -18,7 +18,10 @@
     <PackageVersion Include="Microsoft.Extensions.AI.OpenAI" Version="9.9.1-preview.1.25474.6" />
     <PackageVersion Include="Azure.AI.OpenAI" Version="2.1.0-beta.1" />
     <PackageVersion Include="Azure.Identity" Version="1.13.2" />
+    <PackageVersion Include="Azure.Core" Version="1.47.3" />
     <PackageVersion Include="Ardalis.GuardClauses" Version="5.0.0" />
+    <PackageVersion Include="Microsoft.AspNetCore.Mvc" Version="2.2.0" />
+    <PackageVersion Include="Swashbuckle.AspNetCore" Version="6.4.0" />
     <PackageVersion Include="OpenTelemetry" Version="1.9.0" />
     <PackageVersion Include="OpenTelemetry.Extensions.Hosting" Version="1.9.0" />
     <PackageVersion Include="OpenTelemetry.Instrumentation.Http" Version="1.9.0" />

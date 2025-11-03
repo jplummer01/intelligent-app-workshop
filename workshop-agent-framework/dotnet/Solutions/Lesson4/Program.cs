@@ -29,7 +29,6 @@ HttpClient httpClient = new();
 StockDataPlugin stockDataPlugin = new(new StocksService(httpClient));
 
 // Create web search tool for Bing grounding (requires BING_CONNECTION_ID environment variable)
-Environment.SetEnvironmentVariable("BING_CONNECTION_ID", applicationSettings.AIFoundryProject.GroundingWithBingConnectionId);
 HostedWebSearchTool webSearchTool = new();
 
 // Create AI Functions from plugins

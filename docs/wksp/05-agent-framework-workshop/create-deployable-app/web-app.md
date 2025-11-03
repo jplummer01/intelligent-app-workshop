@@ -2,7 +2,7 @@
 
 The UI was created using React JS and a Node JS proxy to the API. Here is a highlight of key files:
 
-* `workshop/frontend`
+* `workshop-agent-framework/frontend`
   * `Dockerfile` - Dockerfile for building and deploying web app
   * `.env` - local file used to provide configuration values (e.g. url)
   * `package.json` - required package dependencies

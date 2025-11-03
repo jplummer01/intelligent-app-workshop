@@ -19,8 +19,21 @@ builder.Services.AddAntiforgery(options => {
     options.FormFieldName = "X-CSRF-TOKEN-FORM"; });
 builder.Services.AddHttpClient();
 builder.Services.AddDistributedMemoryCache();
-// Add Semantic Kernel services
-builder.Services.AddSkServices();
+
+// Add CORS policy
+builder.Services.AddCors(options =>
+{
+    options.AddDefaultPolicy(policy =>
+    {
+        policy.WithOrigins("http://localhost:80", "http://localhost", "http://localhost:3000")
+              .AllowAnyMethod()
+              .AllowAnyHeader()
+              .AllowCredentials();
+    });
+});
+
+// Add MAF services
+builder.Services.AddMafServices();
 
 // Load user secrets
 builder.Configuration.AddUserSecrets<Program>();
