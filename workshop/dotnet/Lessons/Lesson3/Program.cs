@@ -1,62 +1,70 @@
 using Core.Utilities.Config;
-// TODO: Step 1 - Add import for Plugins
+using Core.Utilities.Plugins;
+using Core.Utilities.Services;
+using Microsoft.Extensions.AI;
+using Microsoft.Agents.AI;
+// TODO: Step 1 - Add the Extensions namespace for HostedWebSearchTool
 
-// TODO: Step 5 - Add import required for StockService
+// Initialize the chat client with Agent Framework  
+IChatClient chatClient = AgentFrameworkProvider.CreateChatClientWithApiKey();
 
-using Microsoft.SemanticKernel;
-using Microsoft.SemanticKernel.Connectors.OpenAI;
-// Add ChatCompletion import
-using Microsoft.SemanticKernel.ChatCompletion;
+// Initialize plugins
+TimeInformationPlugin timePlugin = new();
+HttpClient httpClient = new();
+StockDataPlugin stockDataPlugin = new(new StocksService(httpClient));
 
-
-// Initialize the kernel with chat completion
-IKernelBuilder builder = KernelBuilderProvider.CreateKernelWithChatCompletion();
-Kernel kernel = builder.Build();
-
-// TODO: Step 2 - Initialize Time plugin and registration in the kernel
-
-
-// TODO: Step 6 - Initialize Stock Data Plugin and register it in the kernel
-
-
-// Get chatCompletionService and initialize chatHistory with system prompt
-var chatCompletionService = kernel.GetRequiredService<IChatCompletionService>();
-ChatHistory chatHistory = new("You are a friendly financial advisor that only emits financial advice in a creative and funny tone");
-// Remove the promptExecutionSettings and kernelArgs initialization code
-// Add system prompt
-OpenAIPromptExecutionSettings promptExecutionSettings = new()
+// Create AI Functions from plugins
+var tools = new AIFunction[]
 {
-    // Step 3 - Add Auto invoke kernel functions as the tool call behavior
-
+    AIFunctionFactory.Create(timePlugin.GetCurrentUtcTime),
+    AIFunctionFactory.Create(stockDataPlugin.GetStockPrice),
+    AIFunctionFactory.Create(stockDataPlugin.GetStockPriceForDate)
 };
 
-// Initialize kernel arguments
-KernelArguments kernelArgs = new(promptExecutionSettings);
+// TODO: Step 2 - Initialize web search tool for sentiment analysis
 
-// Execute program.
+// TODO: Step 3 - Create individual AI function variables for clarity
+
+// Create financial advisor agent with function calling capabilities
+string systemInstructions = "You are a friendly financial advisor that only emits financial advice in a creative and funny tone";
+
+// TODO: Step 4 - Transform into a Stock Sentiment Agent with specialized instructions
+
+ChatClientAgent agent = new(
+    chatClient,
+    instructions: systemInstructions,
+    name: "FinancialAdvisor",
+    description: "A friendly financial advisor with access to time and stock data",
+    tools: tools
+);
+
+// TODO: Step 5 - Update agent creation to use new instructions and tools
+
+// Create a thread for conversation
+AgentThread thread = agent.GetNewThread();
+
+// Execute program
 const string terminationPhrase = "quit";
 string? userInput;
 do
 {
     Console.Write("User > ");
     userInput = Console.ReadLine();
+    
+    // Handle null input (e.g., from piped input or EOF)
+    if (userInput == null)
+    {
+        Console.WriteLine("Input ended. Exiting...");
+        break;
+    }
 
-    if (userInput is not null and not terminationPhrase)
+    if (userInput is not terminationPhrase)
     {
         Console.Write("Assistant > ");
-        // Initialize fullMessage variable and add user input to chat history
-        string fullMessage = "";
-        chatHistory.AddUserMessage(userInput);
-
-        // TODO: Step 4 - Provide promptExecutionSettings and kernel arguments
-        await foreach (var chatUpdate in chatCompletionService.GetStreamingChatMessageContentsAsync(chatHistory))
-        {
-            Console.Write(chatUpdate.Content);
-            fullMessage += chatUpdate.Content ?? "";
-        }
-        chatHistory.AddAssistantMessage(fullMessage);
-
-        Console.WriteLine();
+        
+        // Use agent with automatic function calling
+        var response = await agent.RunAsync(userInput, thread);
+        Console.WriteLine(response);
     }
 }
 while (userInput != terminationPhrase);

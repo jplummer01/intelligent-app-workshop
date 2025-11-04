@@ -19,9 +19,9 @@ For each component we need to provide the path to the corresponding `Dockerfile`
 to build and package the application:
 
 ```yaml
-name: semantic-kernel-workshop-csharp
+name: agent-framework-workshop-csharp
 metadata:
-  template: semantic-kernel-workshop-csharp@0.0.1-beta
+  template: agent-framework-workshop-csharp@0.0.1-beta
 services:
   api:
     project: ./App/backend/
@@ -82,7 +82,7 @@ You can build, provision all resources and deploy by following these steps:
           * **openAIApiKey**
           * **openAiChatGptDeployment**: e.g. gpt-4o
           * **openAiEndpoint**
-          * **groundingWithBingConnectionId**
+          * **groundingWithBingConnectionId** - **Must be the full AI Foundry connection path** in format: `/subscriptions/{subscription-id}/resourceGroups/{resource-group}/providers/Microsoft.CognitiveServices/accounts/{ai-foundry-account}/projects/{project-name}/connections/{connection-name}`
           * **stockServiceApiKey**
 1. After the application has been successfully deployed you will see the API and Web Service URLs printed in the console.  
    Click the Web Service URL to interact with the application in your browser.

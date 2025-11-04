@@ -19,7 +19,7 @@ param resourceGroupName string = ''
 var abbrs = loadJsonContent('./abbreviations.json')
 var baseTags = { 'azd-env-name': environmentName }
 var updatedTags = union(empty(tags) ? {} : base64ToJson(tags), baseTags)
-param name string = 'cognitive-services-account'
+var aiFoundryName = '${abbrs.cognitiveServicesAccounts}${environmentName}'
 
 // Organize resources in a resource group
 resource resourceGroup 'Microsoft.Resources/resourceGroups@2021-04-01' = {
@@ -34,10 +34,12 @@ module cognitiveServicesAccount 'modules/cognitive-services.bicep' = {
   params: {
     location: location
     tags: updatedTags
-    name: name
-    aiHubName: '${abbrs.cognitiveServicesAccounts}${environmentName}-hub'
-    aiProjectName:  '${abbrs.cognitiveServicesAccounts}${environmentName}-pro'
+    name: aiFoundryName
+    aiProjectName:  '${aiFoundryName}-proj'
   }
 }
 
-output endpoint string = cognitiveServicesAccount.outputs.endpoint
+output aiFoundryEndpoint string = cognitiveServicesAccount.outputs.aiFoundryEndpoint
+output aiFoundryName string = cognitiveServicesAccount.outputs.aiFoundryName
+output aiProjectName string = cognitiveServicesAccount.outputs.aiProjectName
+output modelDeploymentName string = cognitiveServicesAccount.outputs.modelDeploymentName

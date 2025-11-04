@@ -86,7 +86,7 @@ module app '../core/host/container-app-upsert.bicep' = {
       }
       {
         name: 'ManagedIdentity__ClientId'
-        secretREf: 'azure-managed-identity-client-id'
+        secretRef: 'azure-managed-identity-client-id'
       }
       {
         name: 'AIFoundryProject__Endpoint'

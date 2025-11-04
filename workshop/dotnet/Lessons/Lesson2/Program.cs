@@ -1,47 +1,53 @@
 using Core.Utilities.Config;
-using Microsoft.SemanticKernel;
-using Microsoft.SemanticKernel.Connectors.OpenAI;
+using Microsoft.Extensions.AI;
+using Microsoft.Agents.AI;
+// TODO: Step 1 - Add the required using statements for plugins
 
-// TODO: Step 1 - add ChatCompletion import
+// Step 1 - Initialize the chat client using Microsoft Agent Framework
+IChatClient chatClient = AgentFrameworkProvider.CreateChatClientWithApiKey();
 
-// Initialize the kernel with chat completion
-IKernelBuilder builder = KernelBuilderProvider.CreateKernelWithChatCompletion();
-Kernel kernel = builder.Build();
+// TODO: Step 2 - Initialize plugins for function calling
 
-// TODO: Step 2a - Get chatCompletionService and initialize chatHistory with system prompt
+// TODO: Step 3 - Create AI Functions from plugins
 
-// TODO: Step 2b - Remove the promptExecutionSettings and kernelArgs initialization code
-OpenAIPromptExecutionSettings promptExecutionSettings = new()
-{
-    // Add Auto invoke kernel functions as the tool call behavior
-    ChatSystemPrompt = @"You are a friendly financial advisor that only emits financial advice in a creative and funny tone"
-};
+// Step 2 - Configure system message using Agent Framework pattern
+string systemInstructions = "You are a friendly financial advisor that only emits financial advice in a creative and funny tone";
 
-// Initialize kernel arguments
-KernelArguments kernelArgs = new(promptExecutionSettings);
+// Create a simple financial advisor agent using ChatClientAgent
+ChatClientAgent agent = new(
+    chatClient,
+    instructions: systemInstructions,
+    name: "FinancialAdvisor",
+    description: "A friendly financial advisor that maintains conversation context"
+    // TODO: Step 4 - Add tools parameter to enable function calling
+);
+
+// Create a thread for conversation
+AgentThread thread = agent.GetNewThread();
 
 // Execute program.
 const string terminationPhrase = "quit";
 string? userInput;
+
 do
 {
     Console.Write("User > ");
     userInput = Console.ReadLine();
+    
+    // Handle null input (e.g., from piped input or EOF)
+    if (userInput == null)
+    {
+        Console.WriteLine("Input ended. Exiting...");
+        break;
+    }
 
-    if (userInput is not null and not terminationPhrase)
+    if (userInput is not terminationPhrase)
     {
         Console.Write("Assistant > ");
-        // TODO: Step 3 - Initialize fullMessage variable and add user input to chat history
-
-
-        // TODO: Step 4 - Remove the foreach loop and replace it with `chatCompletionService` code
-        // including adding assistant message to chat history
-        await foreach (var response in kernel.InvokePromptStreamingAsync(userInput, kernelArgs))
-        {
-            Console.Write(response);
-        }
-
-        Console.WriteLine();
+        
+        // Step 3 - Use agent to respond to user input
+        var response = await agent.RunAsync(userInput, thread);
+        Console.WriteLine(response);
     }
 }
 while (userInput != terminationPhrase);

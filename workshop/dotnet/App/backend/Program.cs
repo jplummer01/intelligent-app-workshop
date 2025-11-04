@@ -1,5 +1,4 @@
 using Microsoft.AspNetCore.Antiforgery;
-using Extensions;
 using System.Text.Json.Serialization;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -19,18 +18,16 @@ builder.Services.AddAntiforgery(options => {
     options.FormFieldName = "X-CSRF-TOKEN-FORM"; });
 builder.Services.AddHttpClient();
 builder.Services.AddDistributedMemoryCache();
-// Add Semantic Kernel services
-builder.Services.AddSkServices();
 
 // Load user secrets
 builder.Configuration.AddUserSecrets<Program>();
 
 var app = builder.Build();
+app.UseCors();
 app.UseSwagger();
 app.UseSwaggerUI();
 app.UseOutputCache();
 app.UseRouting();
-app.UseCors();
 app.UseAntiforgery();
 app.MapControllers();
 

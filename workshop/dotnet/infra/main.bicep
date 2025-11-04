@@ -348,6 +348,16 @@ module dataScientistRole 'core/security/subscription-role.bicep' = {
   }
 }
 
+// Grant the managed identity Azure AI Developer role on AI Foundry resource
+module aiFoundryRoleApi 'core/security/subscription-role.bicep' = {
+  name: 'ai-foundry-role-api'
+  params: {
+    principalId: identity.outputs.principalId
+    roleDefinitionId: '64702f94-c441-49e6-a78b-ef80e0188fee' // Azure AI Developer
+    principalType: 'ServicePrincipal'
+  }
+}
+
 output APPLICATIONINSIGHTS_CONNECTION_STRING string = monitoring.outputs.applicationInsightsConnectionString
 output APPLICATIONINSIGHTS_NAME string = monitoring.outputs.applicationInsightsName
 output AZURE_USE_APPLICATION_INSIGHTS bool = useApplicationInsights

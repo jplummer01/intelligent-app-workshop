@@ -1,69 +1,106 @@
 using Core.Utilities.Config;
-// Step 1 - Add import for Plugins
 using Core.Utilities.Plugins;
-// Step 5 - Add import required for StockService
 using Core.Utilities.Services;
-using Microsoft.SemanticKernel;
-using Microsoft.SemanticKernel.Connectors.OpenAI;
-// Add ChatCompletion import
-using Microsoft.SemanticKernel.ChatCompletion;
-// Temporarily added to enable Semantic Kernel tracing
-using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.Logging;
+using Core.Utilities.Extensions;
+using Microsoft.Agents.AI;
+using Microsoft.Extensions.AI;
 
+// Initialize the chat client with Agent Framework  
+IChatClient chatClient = AgentFrameworkProvider.CreateChatClientWithApiKey();
 
-// Initialize the kernel with chat completion
-IKernelBuilder builder = KernelBuilderProvider.CreateKernelWithChatCompletion();
-// Enable tracing
-//builder.Services.AddLogging(services => services.AddConsole().SetMinimumLevel(LogLevel.Trace));
-Kernel kernel = builder.Build();
-
-// Step 2 - Initialize Time plugin and registration in the kernel
-kernel.Plugins.AddFromObject(new TimeInformationPlugin());
-
-// Step 6 - Initialize Stock Data Plugin and register it in the kernel
+// Initialize plugins
+TimeInformationPlugin timePlugin = new();
 HttpClient httpClient = new();
 StockDataPlugin stockDataPlugin = new(new StocksService(httpClient));
-kernel.Plugins.AddFromObject(stockDataPlugin);
 
-// Get chatCompletionService and initialize chatHistory with system prompt
-var chatCompletionService = kernel.GetRequiredService<IChatCompletionService>();
-ChatHistory chatHistory = new("You are a friendly financial advisor that only emits financial advice in a creative and funny tone");
-// Remove the promptExecutionSettings and kernelArgs initialization code
-// Add system prompt
-OpenAIPromptExecutionSettings promptExecutionSettings = new()
-{
-    // Step 3 - Add Auto invoke kernel functions as the tool call behavior
-    ToolCallBehavior = ToolCallBehavior.AutoInvokeKernelFunctions
-};
+// Create AI Functions from plugins
+var timeTool = AIFunctionFactory.Create(timePlugin.GetCurrentUtcTime);
+var stockPriceTool = AIFunctionFactory.Create(stockDataPlugin.GetStockPrice);
+var stockPriceDateTool = AIFunctionFactory.Create(stockDataPlugin.GetStockPriceForDate);
 
-// Initialize kernel arguments
-KernelArguments kernelArgs = new(promptExecutionSettings);
+// Stock Sentiment Agent system instructions - defines the agent's behavior and rules
+string stockSentimentAgentInstructions = """
+    You are a Stock Sentiment Agent. Your responsibility is to find the stock sentiment for a given Stock.
 
-// Execute program.
+    RULES:
+    - Use stock sentiment scale from 1 to 10 where stock sentiment is 1 for sell and 10 for buy.
+    - Provide the rating in your response and a recommendation to buy, hold or sell.
+    - Include the reasoning behind your recommendation.
+    - Include the source of the sentiment in your response.
+    - Focus on technical analysis based on stock price data and general market knowledge.
+    """;
+
+// Create the Stock Sentiment Agent using ChatClientAgent
+ChatClientAgent stockSentimentAgent = new(
+    chatClient,
+    instructions: stockSentimentAgentInstructions,
+    name: "StockSentimentAgent",
+    description: "An intelligent agent that analyzes stock sentiment using market data",
+    tools: [
+        timeTool,
+        stockPriceTool, 
+        stockPriceDateTool
+    ]
+);
+
+// Create a thread for conversation
+AgentThread thread = stockSentimentAgent.GetNewThread();
+
+// Execute program
 const string terminationPhrase = "quit";
 string? userInput;
+
+Console.WriteLine("=== Stock Sentiment Agent with Microsoft Agent Framework ===");
+Console.WriteLine("This agent analyzes stock sentiment using current market data and technical analysis.");
+Console.WriteLine("Enter a stock symbol (e.g., 'MSFT', 'AAPL') or ask questions about stocks.");
+Console.WriteLine("Type 'quit' to exit.");
+Console.WriteLine("===============================================================");
+Console.WriteLine();
+
 do
 {
     Console.Write("User > ");
     userInput = Console.ReadLine();
+    
+    // Handle null input (e.g., from piped input or EOF)
+    if (userInput == null)
+    {
+        Console.WriteLine("Input ended. Exiting...");
+        break;
+    }
 
-    if (userInput is not null and not terminationPhrase)
+    if (userInput is not terminationPhrase)
     {
         Console.Write("Assistant > ");
-        // Initialize fullMessage variable and add user input to chat history
-        string fullMessage = "";
-        chatHistory.AddUserMessage(userInput);
-
-        // Step 4 - Provide promptExecutionSettings and kernel arguments
-        await foreach (var chatUpdate in chatCompletionService.GetStreamingChatMessageContentsAsync(chatHistory, promptExecutionSettings, kernel))
+        
+        try
         {
-            Console.Write(chatUpdate.Content);
-            fullMessage += chatUpdate.Content ?? "";
+            // Use the agent to process the user message
+            var response = await stockSentimentAgent.RunAsync(userInput, thread);
+            
+            // Extract and display the response content
+            if (response?.Messages?.Any() == true)
+            {
+                var lastMessage = response.Messages.Last();
+                Console.WriteLine(lastMessage.Text ?? "No response generated.");
+            }
+            else
+            {
+                Console.WriteLine("No response generated from the agent.");
+            }
         }
-        chatHistory.AddAssistantMessage(fullMessage);
-
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error processing request: {ex.Message}");
+            if (ex.InnerException != null)
+            {
+                Console.WriteLine($"Inner exception: {ex.InnerException.Message}");
+            }
+        }
+        
         Console.WriteLine();
     }
 }
 while (userInput != terminationPhrase);
+
+Console.WriteLine("Thank you for using the Stock Sentiment Agent!");

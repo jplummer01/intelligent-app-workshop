@@ -1,27 +1,33 @@
 <Project>
   <ItemGroup>
-    <PackageVersion Include="Ardalis.GuardClauses" Version="5.0.0" />
-    <PackageVersion Include="Azure.Core" Version="1.45.0" />
-    <PackageVersion Include="Microsoft.AspNetCore.Mvc" Version="2.3.0" />
-    <PackageVersion Include="Microsoft.AspNetCore.OpenApi" Version="9.0.2" />
-    <PackageVersion Include="Microsoft.Extensions.Configuration" Version="9.0.2" />
-    <PackageVersion Include="Microsoft.Extensions.Configuration.Binder" Version="9.0.2" />
-    <PackageVersion Include="Microsoft.Extensions.Configuration.UserSecrets" Version="9.0.2" />
-    <PackageVersion Include="Microsoft.Extensions.Configuration.EnvironmentVariables" Version="9.0.2" />
-    <PackageVersion Include="Microsoft.Extensions.Logging" Version="9.0.2" />
-    <PackageVersion Include="Microsoft.Extensions.Logging.Console" Version="9.0.2" />
-    <PackageVersion Include="Microsoft.Extensions.DependencyInjection" Version="9.0.2" />
-    <PackageVersion Include="Microsoft.SemanticKernel" Version="1.37.0" />
-    <PackageVersion Include="Microsoft.SemanticKernel.Agents.AzureAI" Version="1.37.0-alpha" />
-    <PackageVersion Include="Microsoft.SemanticKernel.Agents.Core" Version="1.37.0-alpha" />
-    <PackageVersion Include="Microsoft.SemanticKernel.Plugins.Web" Version="1.37.0-alpha" />
-    <PackageVersion Include="Microsoft.SemanticKernel.Plugins.Core" Version="1.37.0-alpha" />
+    <PackageVersion Include="Azure.AI.Agents.Persistent" Version="1.2.0-beta.5" />
+    <PackageVersion Include="Azure.AI.Projects" Version="1.0.0-beta.2" />
+    <PackageVersion Include="Microsoft.Agents.AI.AzureAI" Version="1.0.0-preview.251009.1" />
+    <PackageVersion Include="Microsoft.Agents.AI.OpenAI" Version="1.0.0-preview.251009.1" />
+    <PackageVersion Include="Microsoft.Agents.AI.Workflows" Version="1.0.0-preview.251009.1" />
+    <PackageVersion Include="Microsoft.Agents.AI" Version="1.0.0-preview.251009.1" />
+    <PackageVersion Include="Microsoft.Extensions.AI.Abstractions" Version="9.9.1" />
+    <PackageVersion Include="Microsoft.Extensions.Configuration" Version="8.0.0" />
+    <PackageVersion Include="Microsoft.Extensions.Configuration.Binder" Version="8.0.0" />
+    <PackageVersion Include="Microsoft.Extensions.Configuration.UserSecrets" Version="8.0.0" />
+    <PackageVersion Include="Microsoft.Extensions.Configuration.EnvironmentVariables" Version="8.0.0" />
+    <PackageVersion Include="Microsoft.Extensions.Logging" Version="8.0.0" />
+    <PackageVersion Include="Microsoft.Extensions.Logging.Console" Version="8.0.0" />
+    <PackageVersion Include="Microsoft.Extensions.DependencyInjection" Version="8.0.0" />
+    <PackageVersion Include="Microsoft.Extensions.AI" Version="9.9.1" />
+    <PackageVersion Include="Microsoft.Extensions.AI.OpenAI" Version="9.9.1-preview.1.25474.6" />
+    <PackageVersion Include="Azure.AI.OpenAI" Version="2.1.0-beta.1" />
     <PackageVersion Include="Azure.Identity" Version="1.13.2" />
-    <PackageVersion Include="Swashbuckle.AspNetCore" Version="6.8.1" />
-    <PackageVersion Include="xunit" Version="2.4.1" />
-    <PackageVersion Include="xunit.runner.visualstudio" Version="2.4.3" />
-    <PackageVersion Include="Microsoft.NET.Test.Sdk" Version="16.9.4" />
-    <PackageVersion Include="System.Net.Http.Json" Version="5.0.0" />
-    <PackageVersion Include="Moq" Version="4.16.1" />
+    <PackageVersion Include="Azure.Core" Version="1.47.3" />
+    <PackageVersion Include="Ardalis.GuardClauses" Version="5.0.0" />
+    <PackageVersion Include="Microsoft.AspNetCore.Mvc" Version="2.2.0" />
+    <PackageVersion Include="Swashbuckle.AspNetCore" Version="6.4.0" />
+    <PackageVersion Include="OpenTelemetry" Version="1.9.0" />
+    <PackageVersion Include="OpenTelemetry.Extensions.Hosting" Version="1.9.0" />
+    <PackageVersion Include="OpenTelemetry.Instrumentation.Http" Version="1.9.0" />
+    <PackageVersion Include="OpenTelemetry.Exporter.Console" Version="1.9.0" />
+    <PackageVersion Include="OpenTelemetry.Exporter.OpenTelemetryProtocol" Version="1.9.0" />
+    <PackageVersion Include="Microsoft.Extensions.Hosting" Version="8.0.0" />
+    <PackageVersion Include="System.Diagnostics.DiagnosticSource" Version="9.0.9" />
   </ItemGroup>
 </Project>

@@ -1,6 +1,6 @@
 # Prerequisites
 
-Before attending the Intelligent App Development Workshop, please ensure you have the following prerequisites in place:
+Before attending the Microsoft Agent Framework Workshop, please ensure you have the following prerequisites in place:
 
 1. **Azure account**: A Microsoft Azure account with an active subscription. If you don't have one, sign up for a [free trial](https://azure.microsoft.com/en-us/free/).
 1. **Azure subscription with access enabled for the Azure AI Foundry** - For more details, see the [Azure AI Foundry documentation on how to get access](https://learn.microsoft.com/en-us/azure/ai-studio/what-is-ai-studio#how-to-get-access). 
@@ -91,7 +91,14 @@ cd intelligent-app-workshop
         ![Groundingconnection](./images/bing-grounding-connection.jpg)
     1. Find the resource you created and click **Add connection**.
     1. Click **Close**.
-    1. On the Connections page, copy the name of the connection you just created and paste it as the **groundingWithBingConnectionId** value within the `AIFoundryProject` element in the `appSettings.json` file.
+    1. On the Connections page, click on the Bing connection you just created to view its details.
+    1. Copy the **full Connection ID** (not just the name). The Connection ID should look like:
+        ```
+        /subscriptions/{subscription-id}/resourceGroups/{resource-group}/providers/Microsoft.CognitiveServices/accounts/{ai-foundry-account}/projects/{project-name}/connections/{connection-name}
+        ```
+    1. Paste this full Connection ID as the **groundingWithBingConnectionId** value within the `AIFoundryProject` element in the `appSettings.json` file.
+    
+    > **Important**: You must use the complete Azure AI Foundry connection path, not just the connection name. The Connection ID includes the subscription ID, resource group, AI Foundry account, project name, and connection name.
 
 1. Upgrade OpenAI Connection
 
@@ -115,7 +122,7 @@ cd intelligent-app-workshop
     1. Copy the api key and store as the **apiKey** value in `appsettings.json`.
             ![OpenAI Deployment settings](./images/open-ai-connection.jpg)
 
-1. We need to obtain an API Key to be able to get stock prices from [polygon.io](https://polygon.io/dashboard/login). You can sign up for a free API Key by creating a login. This value will be needed for [Lesson 3](lesson3.md).
-    1. Once logged in, from the [polygon.io Dashboard](https://polygon.io/dashboard) locate the **Keys** section. Copy the default key value and paste it as the **apiKey** value within the `StockService` element in the `appsettings.json` file.
+1. We need to obtain an API Key to be able to get stock prices from [Massive](https://massive.com/dashboard/login). You can sign up for a free API Key by creating a login. This value will be needed for [Lesson 3](lesson3.md).
+    1. Once logged in, from the [Massive Dashboard](https://massive.com/dashboard) locate the **Keys** section. Copy the default key value and paste it as the **apiKey** value within the `StockService` element in the `appsettings.json` file.
 
 By ensuring you have completed these prerequisites, you'll be well-prepared to dive into the Intelligent App Development Workshop and make the most of the hands-on learning experience.
