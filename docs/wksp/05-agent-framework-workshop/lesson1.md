@@ -7,7 +7,7 @@ In this lesson we will create a basic AI agent using Microsoft Agent Framework w
 1. Switch to Lesson 1 directory:
 
     ```bash
-    cd workshop-agent-framework/dotnet/Lessons/Lesson1
+    cd workshop/dotnet/Lessons/Lesson1
     ```
 
 1. Copy the configuration file from the Solutions directory:

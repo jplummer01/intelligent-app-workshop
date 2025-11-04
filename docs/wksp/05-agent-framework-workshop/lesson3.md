@@ -5,7 +5,7 @@ This lesson creates a specialized agent focused on stock sentiment analysis usin
 1. Switch to Lesson 3 directory:
 
     ```bash
-    cd workshop-agent-framework/dotnet/Lessons/Lesson3
+    cd workshop/dotnet/Lessons/Lesson3
     ```
 
 1. Copy the configuration file from the Solutions directory:

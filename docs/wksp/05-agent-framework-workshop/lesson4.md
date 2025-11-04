@@ -5,7 +5,7 @@ This lesson adds web search capabilities to our financial agent, allowing it to 
 1. Switch to Lesson 4 directory:
 
     ```bash
-    cd workshop-agent-framework/dotnet/Lessons/Lesson4
+    cd workshop/dotnet/Lessons/Lesson4
     ```
 
 1. Copy the configuration file from the Solutions directory:

@@ -5,7 +5,7 @@ This lesson builds on lesson 1 by adding function calling capabilities to our ag
 1. Switch to Lesson 2 directory:
 
     ```bash
-    cd workshop-agent-framework/dotnet/Lessons/Lesson2
+    cd workshop/dotnet/Lessons/Lesson2
     ```
 
 1. Copy the configuration file from the Solutions directory:

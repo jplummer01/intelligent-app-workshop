@@ -22,7 +22,7 @@ This lesson demonstrates sequential orchestration where multiple specialized age
 1. Switch to Lesson 5 directory:
 
     ```bash
-    cd workshop-agent-framework/dotnet/Lessons/Lesson5
+    cd workshop/dotnet/Lessons/Lesson5
     ```
 
 2. Run the application to see the current basic implementation:
