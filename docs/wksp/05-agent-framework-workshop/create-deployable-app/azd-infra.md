@@ -47,18 +47,18 @@ use `bicep` templates which are organized as follows:
 
 * **infra**
   * `main.bicep` - contains the bicep parameters and modules to deploy
-  * `main.paramters.json` - parameter values to be used during deployment
+  * `main.parameters.json` - parameter values to be used during deployment
   * `abbreviations.json` - optional file to specify suffix abbreviations for each resource type
-    * app - subdirectory with application related templates
-      * `api.bicep` - bicep template for backend application infrastructure
-      * `web.bicep` - bicep templated for web application infrastructure
-    * core - subdirectory with templates for core infrastructure components
-      * **ai** - subdirectory for AI related components
-      * **bing** - subdirectory for Bing Search service
-      * **host** - subdirectory for container app, environment and registry components
-      * **monitor** - subdirectory for monitoring components (e.g. application insights)
-      * **security** - subdirectory for security components (e.g. keyvault)
-      * **storage** - subdirectory for storage components (e.g. storage account)
+  * **app** - subdirectory with application related templates
+    * `api.bicep` - bicep template for backend application infrastructure
+    * `web.bicep` - bicep templated for web application infrastructure
+  * **core** - subdirectory with templates for core infrastructure components
+    * **ai** - subdirectory for AI related components
+    * **bing** - subdirectory for Bing Search service
+    * **host** - subdirectory for container app, environment and registry components
+    * **monitor** - subdirectory for monitoring components (e.g. application insights)
+    * **security** - subdirectory for security components (e.g. keyvault)
+    * **storage** - subdirectory for storage components (e.g. storage account)
 
 The `azd init` command can be used to generate a starter template, however the quickest way
 to generate an existing template is to find a template that uses similar components from
@@ -78,12 +78,12 @@ You can build, provision all resources and deploy by following these steps:
         * Select an Azure subscription to use from list
         * Select an Azure location to use: e.g. (US) East US 2 (eastus2)
         * Enter a value for the infrastructure parameters:
-          * **aiFoundryProjectConnectionString**
-          * **openAIApiKey**
-          * **openAiChatGptDeployment**: e.g. gpt-4o
-          * **openAiEndpoint**
-          * **groundingWithBingConnectionId** - **Must be the full AI Foundry connection path** in format: `/subscriptions/{subscription-id}/resourceGroups/{resource-group}/providers/Microsoft.CognitiveServices/accounts/{ai-foundry-account}/projects/{project-name}/connections/{connection-name}`
-          * **stockServiceApiKey**
+            * **aiFoundryProjectConnectionString**
+            * **openAIApiKey**
+            * **openAiChatGptDeployment**: e.g. gpt-4o
+            * **openAiEndpoint**
+            * **groundingWithBingConnectionId** - **Must be the full AI Foundry connection path** in format: `/subscriptions/{subscription-id}/resourceGroups/{resource-group}/providers/Microsoft.CognitiveServices/accounts/{ai-foundry-account}/projects/{project-name}/connections/{connection-name}`
+            * **stockServiceApiKey**
 1. After the application has been successfully deployed you will see the API and Web Service URLs printed in the console.  
    Click the Web Service URL to interact with the application in your browser.
 
