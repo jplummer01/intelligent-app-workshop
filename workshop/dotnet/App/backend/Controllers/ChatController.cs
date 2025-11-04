@@ -51,7 +51,7 @@ public class ChatController : ControllerBase
             instructions: researchAgentInstructions,
             name: "PortfolioResearchAgent",
             description: "Gathers market data and news for portfolio stocks",
-            tools: [stockPriceTool, webSearchTool, timeTool]
+            tools: [stockPriceTool, webSearchTool, timeTool, stockPriceDateTool]
         );
 
         // Agent 2: Risk Assessment Agent - Analyzes portfolio risk

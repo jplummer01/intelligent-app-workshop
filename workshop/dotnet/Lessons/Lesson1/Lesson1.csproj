@@ -11,7 +11,8 @@
     <PackageReference Include="Microsoft.Extensions.AI" />
     <PackageReference Include="Microsoft.Agents.AI" />
     <PackageReference Include="Azure.AI.OpenAI" />
-  </ItemGroup>    <ItemGroup>
+  </ItemGroup>    
+  <ItemGroup>
         <None Update="appsettings.json">
             <CopyToOutputDirectory>Always</CopyToOutputDirectory>
         </None>
