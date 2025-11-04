@@ -24,9 +24,15 @@ A React-based chat application for interacting with an AI assistant (backend), d
 
    ```bash
    API_URL=https://your-backend-api-url/chat
-   REACT_APP_PROXY_URL=http://localhost/api/chat
+   REACT_APP_PROXY_URL=/api/chat
    PORT=80
    ```
+
+   **Note:** 
+   - `API_URL` is used by the Node.js server (`server.js`) at runtime to proxy requests to the backend API
+   - `REACT_APP_PROXY_URL` is baked into the React build - use the relative path `/api/chat` so it works both locally and when deployed
+   - For local development, set `API_URL=http://localhost:5000/chat`
+   - When deployed to Azure, `API_URL` is automatically set via Container Apps environment variables
 
 1. **Run the Application:**
 
