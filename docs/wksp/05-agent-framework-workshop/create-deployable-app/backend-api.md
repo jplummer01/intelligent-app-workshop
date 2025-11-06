@@ -34,11 +34,43 @@ you through the process followed to create the backend API from the Console appl
     dotnet add package Swashbuckle.AspNetCore
     ```
 
+1. Update the `backend.csproj` file to add the project reference. The final csproj should look like this:
+
+    ```xml
+    <Project Sdk="Microsoft.NET.Sdk.Web">
+
+      <PropertyGroup>
+        <TargetFramework>net9.0</TargetFramework>
+        <Nullable>enable</Nullable>
+        <ImplicitUsings>enable</ImplicitUsings>
+      </PropertyGroup>
+
+      <ItemGroup>
+        <PackageReference Include="Azure.Identity" />
+        <PackageReference Include="Azure.Core" />
+        <PackageReference Include="Azure.AI.Agents.Persistent" />
+        <PackageReference Include="Azure.AI.OpenAI" />
+        <PackageReference Include="Microsoft.AspNetCore.Mvc" />
+        <PackageReference Include="Microsoft.Agents.AI" />
+        <PackageReference Include="Microsoft.Agents.AI.AzureAI" />
+        <PackageReference Include="Microsoft.Agents.AI.OpenAI" />
+        <PackageReference Include="Microsoft.Agents.AI.Workflows" />
+        <PackageReference Include="Microsoft.Extensions.AI" />
+        <PackageReference Include="Microsoft.Extensions.AI.OpenAI" />
+        <PackageReference Include="Swashbuckle.AspNetCore" />
+      </ItemGroup>
+
+      <ItemGroup>
+        <ProjectReference Include="..\..\Core.Utilities\Core.Utilities.csproj" />
+      </ItemGroup>
+
+    </Project>
+    ```
+
 1. Replace the contents of `Program.cs` in the project directory with the following code. This file initializes and loads the required services and configuration for the API, namely configuring CORS protection, enabling controllers for the API and exposing Swagger document:
 
     ```csharp
     using Microsoft.AspNetCore.Antiforgery;
-    using Extensions;
     using System.Text.Json.Serialization;
 
     var builder = WebApplication.CreateBuilder(args);
@@ -63,11 +95,11 @@ you through the process followed to create the backend API from the Console appl
     builder.Configuration.AddUserSecrets<Program>();
 
     var app = builder.Build();
+    app.UseCors();
     app.UseSwagger();
     app.UseSwaggerUI();
     app.UseOutputCache();
     app.UseRouting();
-    app.UseCors();
     app.UseAntiforgery();
     app.MapControllers();
 
@@ -91,9 +123,7 @@ you through the process followed to create the backend API from the Console appl
 1. Next we need to create a `Controllers` directory to add REST API controller classes:
 
     ```bash
-    cd ..
     mkdir Controllers
-    cd Controllers
     ```
 
 1. Within the `Controllers` directory create a `ChatController.cs` file which implements a sequential orchestration workflow with three specialized agents (following the Lesson 5 pattern):
@@ -121,7 +151,9 @@ you through the process followed to create the backend API from the Console appl
         public ChatController()
         {
             // Initialize the chat client with Agent Framework
-            _chatClient = AgentFrameworkProvider.CreateChatClientWithApiKey();
+            // Uses managed identity when deployed to Azure Container Apps, API key for local development
+            // The AgentFrameworkProvider.CreateChatClient() handles all authentication logic centrally
+            _chatClient = AgentFrameworkProvider.CreateChatClient();
 
             // Initialize plugins  
             TimeInformationPlugin timePlugin = new();
@@ -261,16 +293,11 @@ you through the process followed to create the backend API from the Console appl
     - **Sequential workflow** ensures each agent builds upon the previous agent's output
     - **Stateless design** - Each request is independent, no thread management needed
     - Uses `AgentFrameworkProvider` which reads configuration from `appsettings.json`
+    - **Centralized Authentication**: The `AgentFrameworkProvider.CreateChatClient()` method automatically chooses between managed identity (when deployed to Azure Container Apps) and API key (for local development) based on the `ManagedIdentity.clientId` configuration value
 
 ## Running the Backend API locally
 
-1. To run API locally first copy valid `appsettings.json` from completed `Solutions/Lesson5` into `backend` directory:
-
-    ```bash
-    #cd into backend directory
-    cd ../
-    cp ../../Solutions/Lesson5/appsettings.json .
-    ```
+1. To run API locally first copy the `appsettings.json` file from Lesson5.
 
 1. Next run using `dotnet run`:
 
