@@ -20,7 +20,8 @@ public class ChatController : ControllerBase
     public ChatController()
     {
         // Initialize the chat client with Agent Framework
-        _chatClient = AgentFrameworkProvider.CreateChatClientWithApiKey();
+        // Uses managed identity when deployed to Azure Container Apps, API key for local development
+        _chatClient = AgentFrameworkProvider.CreateChatClient();
 
         // Initialize plugins  
         TimeInformationPlugin timePlugin = new();
